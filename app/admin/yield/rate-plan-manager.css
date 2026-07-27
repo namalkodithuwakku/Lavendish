@@ -14,6 +14,37 @@
   gap: 8px;
 }
 
+.yield-check-control {
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+}
+
+.yield-check-control button {
+  min-width: 180px;
+  height: 40px;
+  border: 0;
+  border-radius: 9px;
+  background: #7463a8;
+  color: #fff;
+  padding: 0 15px;
+  font-size: 10px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.yield-check-control button:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
+.yield-check-control small {
+  max-width: 360px;
+  color: #746b7c;
+  font-size: 9px;
+  text-align: right;
+}
+
 .rate-plan-actions > button {
   height: 38px;
   border: 1px solid #7463a8;
@@ -171,6 +202,21 @@
 
   .rate-plan-actions {
     width: 100%;
+  }
+
+  .yield-page .admin-header {
+    gap: 14px;
+    flex-direction: column;
+  }
+
+  .yield-check-control {
+    width: 100%;
+    justify-items: stretch;
+  }
+
+  .yield-check-control small {
+    max-width: none;
+    text-align: left;
   }
 
   .rate-plan-actions > button {
