@@ -7,6 +7,7 @@ import { hotels, type HotelData } from "./dashboard-data";
 
 type ViewMode = "numbers" | "percentage";
 const AUTO_REFRESH_MS = 5 * 60 * 1000;
+const MOBILE_WEEKDAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 const monthFormatter = new Intl.DateTimeFormat("en-US", {
   month: "long",
   year: "numeric",
@@ -119,6 +120,7 @@ export default function Home() {
       ),
     [year, month],
   );
+  const mobileMonthStartOffset = (new Date(year, month - 1, 1).getDay() + 6) % 7;
 
   const loadLive = useCallback(
     async (manual = false) => {
@@ -477,12 +479,24 @@ export default function Home() {
                 {refreshing ? "Refreshing…" : liveMessage} ↻
               </button>
             </div>
-            <div className="calendar-weekdays">
+            <div className="calendar-weekdays desktop-calendar-weekdays">
               {weekdays.map((day) => (
                 <span key={day}>{day}</span>
               ))}
             </div>
+            <div className="calendar-weekdays mobile-calendar-weekdays">
+              {MOBILE_WEEKDAYS.map((day) => (
+                <span key={day}>{day}</span>
+              ))}
+            </div>
             <div className="calendar-grid">
+              {Array.from({ length: mobileMonthStartOffset }, (_, index) => (
+                <span
+                  className="mobile-calendar-spacer"
+                  aria-hidden="true"
+                  key={`mobile-spacer-${index}`}
+                />
+              ))}
               {hotel.occupied.map((value, index) => {
                 const available = hotel.rooms - value,
                   isToday = isCurrentMonth && index === focusIndex;
