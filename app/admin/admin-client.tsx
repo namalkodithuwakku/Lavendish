@@ -57,6 +57,7 @@ export default function AdminClient({ adminName, adminEmail }: { adminName:strin
         <Link href="/">⌂ <span>Occupancy dashboard</span></Link>
         <Link className="active" href="/admin">▦ <span>Hotel profiles</span></Link>
         <Link href="/admin/users">♙ <span>Users & access</span></Link>
+        <Link href="/admin/yield">↗ <span>Yield rules</span></Link>
         <button>⌁ <span>Sheet reader</span><i>Soon</i></button>
         <button>⚙ <span>Settings</span><i>Soon</i></button>
       </nav>

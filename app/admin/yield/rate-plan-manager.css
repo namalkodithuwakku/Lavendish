@@ -1,0 +1,195 @@
+.band-head,
+.band-row {
+  grid-template-columns: 1fr 1fr 1.2fr 32px;
+}
+
+.rate-plan-actions,
+.plan-tools,
+.plan-dates {
+  display: flex;
+  align-items: center;
+}
+
+.rate-plan-actions {
+  gap: 8px;
+}
+
+.rate-plan-actions > button {
+  height: 38px;
+  border: 1px solid #7463a8;
+  border-radius: 9px;
+  background: #fff;
+  color: #665591;
+  padding: 0 13px;
+  font-size: 9px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.plan-tools {
+  gap: 6px;
+}
+
+.plan-tools button {
+  border: 1px solid #ddd8e5;
+  border-radius: 7px;
+  background: #fff;
+  color: #665a75;
+  padding: 6px 8px;
+  font-size: 8px;
+  cursor: pointer;
+}
+
+.plan-tools .danger-link {
+  color: #a5515a;
+}
+
+.rate-plan-card.inactive-plan {
+  opacity: .64;
+}
+
+.rate-plan-card > header em {
+  border-radius: 9px;
+  background: #eeecef;
+  color: #827d87;
+  padding: 4px 6px;
+  font-size: 8px;
+  font-style: normal;
+}
+
+.plan-dates {
+  gap: 18px;
+  padding: 8px 15px;
+  border-top: 1px solid #eeebf2;
+  color: #918b98;
+  font-size: 9px;
+}
+
+.remove-band {
+  width: 32px;
+  height: 38px;
+  border: 1px solid #ead9dc;
+  border-radius: 8px;
+  background: #fff8f8;
+  color: #b35d67;
+  font-size: 17px;
+  cursor: pointer;
+}
+
+.add-band {
+  margin: 8px 15px 13px;
+  border: 1px dashed #a99bc7;
+  border-radius: 8px;
+  background: #faf8fd;
+  color: #66548e;
+  padding: 9px 12px;
+  font-size: 9px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.empty-yield button {
+  border: 0;
+  border-radius: 8px;
+  background: #7463a8;
+  color: #fff;
+  padding: 9px 12px;
+  font-size: 9px;
+}
+
+.copy-message {
+  margin-top: 14px;
+  padding: 11px 12px;
+  border-radius: 9px;
+  background: #f2eff9;
+  color: #6c6180;
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.delete-confirm {
+  width: min(420px, 100%);
+  border-radius: 15px;
+  background: #fff;
+  padding: 25px;
+  text-align: center;
+  box-shadow: 0 20px 70px rgba(38, 31, 49, .2);
+}
+
+.delete-confirm > span {
+  width: 38px;
+  height: 38px;
+  margin: auto;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #fff0f1;
+  color: #a94e58;
+  font-weight: 900;
+}
+
+.delete-confirm h2 {
+  margin: 14px 0 7px;
+  font-size: 18px;
+}
+
+.delete-confirm p {
+  color: #88818d;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.delete-confirm > div {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.delete-confirm button {
+  height: 37px;
+  border: 1px solid #ddd9e1;
+  border-radius: 8px;
+  background: #fff;
+  padding: 0 13px;
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.delete-confirm .delete-plan {
+  border-color: #a84e59;
+  background: #a84e59;
+  color: #fff;
+  font-weight: 800;
+}
+
+@media (max-width: 650px) {
+  .band-head,
+  .band-row {
+    grid-template-columns: 1fr 1fr 1.2fr 32px;
+  }
+
+  .rate-plan-actions {
+    width: 100%;
+  }
+
+  .rate-plan-actions > button {
+    flex: 1;
+    font-size: 11px;
+  }
+
+  .rate-plan-card > header {
+    align-items: flex-start;
+    gap: 9px;
+    flex-direction: column;
+  }
+
+  .plan-tools {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .plan-tools strong {
+    margin-right: auto;
+  }
+}
