@@ -328,7 +328,7 @@ async function createAlert(
   return true;
 }
 
-async function runEngine() {
+async function runEngine(hotelCode?: string) {
   const db = adminClient();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -363,7 +363,8 @@ async function runEngine() {
   const activeProfiles = (profiles ?? []).filter(
     (profile) =>
       profile.google_spreadsheet_id &&
-      settingsByHotel.has(profile.hotel_code),
+      settingsByHotel.has(profile.hotel_code) &&
+      (!hotelCode || profile.hotel_code === hotelCode),
   ) as Profile[];
 
   const jobs: {
@@ -557,7 +558,10 @@ export async function POST(request: NextRequest) {
     );
 
   try {
-    return NextResponse.json(await runEngine());
+    const hotelCode =
+      request.nextUrl.searchParams.get("hotel")?.trim().toUpperCase() ||
+      undefined;
+    return NextResponse.json(await runEngine(hotelCode));
   } catch (error) {
     return NextResponse.json(
       {

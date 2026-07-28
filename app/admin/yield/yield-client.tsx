@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../auth-provider";
 import { supabase } from "../../supabase";
+import "./failure-details.css";
 
 type Band={id:string;sold_from:number;sold_to:number;rate:number;display_order:number;isNew?:boolean};
 type Plan={id:string;hotel_code:string;plan_code:string;plan_name:string;currency:string;effective_from:string;effective_to:string|null;active:boolean;review_note:string|null;yield_rate_bands:Band[]};
@@ -17,7 +18,7 @@ const blankPlan=():PlanDraft=>({plan_code:"",plan_name:"",currency:"USD",effecti
 
 export default function YieldClient(){
   const {access,session}=useAuth();
-  const [hotel,setHotel]=useState("MLR"),[plans,setPlans]=useState<Plan[]>([]),[settings,setSettings]=useState<Settings|null>(null),[busy,setBusy]=useState(false),[checking,setChecking]=useState(false),[checkSummary,setCheckSummary]=useState(""),[notice,setNotice]=useState(""),[draft,setDraft]=useState<PlanDraft|null>(null),[copySource,setCopySource]=useState<Plan|null>(null),[confirmDelete,setConfirmDelete]=useState<Plan|null>(null);
+  const [hotel,setHotel]=useState("MLR"),[plans,setPlans]=useState<Plan[]>([]),[settings,setSettings]=useState<Settings|null>(null),[busy,setBusy]=useState(false),[checking,setChecking]=useState(false),[checkSummary,setCheckSummary]=useState(""),[failureDetails,setFailureDetails]=useState<string[]>([]),[notice,setNotice]=useState(""),[draft,setDraft]=useState<PlanDraft|null>(null),[copySource,setCopySource]=useState<Plan|null>(null),[confirmDelete,setConfirmDelete]=useState<Plan|null>(null);
   const hotelName=HOTELS.find(([code])=>code===hotel)?.[1]??hotel;
   const selectedPlans=useMemo(()=>plans.filter(plan=>plan.hotel_code===hotel),[plans,hotel]);
   const load=useCallback(async()=>{
@@ -70,12 +71,48 @@ export default function YieldClient(){
   }
   async function deletePlan(){if(!confirmDelete)return;setBusy(true);const {error}=await supabase.from("yield_rate_plans").delete().eq("id",confirmDelete.id);setNotice(error?error.message:`${confirmDelete.plan_name} was deleted.`);setConfirmDelete(null);setBusy(false);if(!error)await load()}
   async function saveSettings(event:FormEvent){event.preventDefault();if(!settings)return;setBusy(true);const {error}=await supabase.from("yield_settings").upsert({...settings,updated_by:session?.user.id,updated_at:new Date().toISOString()},{onConflict:"hotel_code"});setNotice(error?error.message:`Notification rules saved for ${hotelName}.`);setBusy(false)}
-  async function runYieldCheck(){if(!session)return;setChecking(true);setCheckSummary("");try{const response=await fetch("/api/yield/check",{method:"POST",cache:"no-store",headers:{Authorization:`Bearer ${session.access_token}`}}),result=await response.json();if(!response.ok||!result.success)throw new Error(result.error??"Yield check failed");const failures=Number(result.failures?.length??0);setCheckSummary(`${result.checkedDates} dates checked • ${result.createdAlerts} new alerts • ${result.baselines} first-time snapshots${failures?` • ${failures} read failures`:""}`)}catch(error){setNotice(error instanceof Error?error.message:"Yield check failed")}finally{setChecking(false)}}
+  async function runYieldCheck(){
+    if(!session)return;
+    setChecking(true);
+    setCheckSummary("");
+    setFailureDetails([]);
+    setNotice("");
+    let checkedDates=0,createdAlerts=0,baselines=0,failures=0;
+    const failureMessages:string[]=[];
+    try{
+      for(let index=0;index<HOTELS.length;index++){
+        const [code,name]=HOTELS[index];
+        setCheckSummary(`Checking ${index+1} of ${HOTELS.length}: ${name}…`);
+        const response=await fetch(`/api/yield/check?hotel=${encodeURIComponent(code)}`,{
+          method:"POST",
+          cache:"no-store",
+          headers:{Authorization:`Bearer ${session.access_token}`}
+        });
+        const responseText=await response.text();
+        let result:{success?:boolean;error?:string;checkedDates?:number;createdAlerts?:number;baselines?:number;failures?:string[]};
+        try{result=JSON.parse(responseText)}
+        catch{throw new Error(`${name} check ended unexpectedly. Please retry after the current deployment is ready.`)}
+        if(!response.ok||!result.success)throw new Error(result.error??`${name} yield check failed`);
+        checkedDates+=Number(result.checkedDates??0);
+        createdAlerts+=Number(result.createdAlerts??0);
+        baselines+=Number(result.baselines??0);
+        failures+=Number(result.failures?.length??0);
+        failureMessages.push(...(result.failures??[]));
+        setCheckSummary(`${index+1} of ${HOTELS.length} hotels complete • ${checkedDates} dates checked • ${createdAlerts} new alerts • ${baselines} first-time snapshots${failures?` • ${failures} read failures`:""}`);
+      }
+      setFailureDetails(failureMessages);
+    }catch(error){
+      setNotice(error instanceof Error?error.message:"Yield check failed");
+    }finally{
+      setChecking(false);
+    }
+  }
   if(access?.role!=="MASTER_ADMIN")return <main className="access-blocked"><div><span>NK</span><h1>Master access required</h1><Link href="/">Return to dashboard</Link></div></main>;
   return <main className="admin-shell">
     <aside className="admin-nav"><div className="admin-brand"><span>NK</span><div><b>N K Hotels</b><small>Lavendish Management</small></div></div><nav><Link href="/">⌂ <span>Occupancy dashboard</span></Link><Link href="/admin">▦ <span>Hotel profiles</span></Link><Link href="/admin/users">♙ <span>Users & access</span></Link><Link className="active" href="/admin/yield">↗ <span>Yield rules</span></Link></nav><div className="admin-identity"><span>NK</span><div><b>{session?.user.user_metadata?.full_name??"Master"}</b><small>Master Admin</small></div></div></aside>
     <section className="admin-page yield-page">
       <header className="admin-header"><div><p>YIELD CONTROL</p><h1>Rates & notification rules</h1><span>All values are editable. Changes apply without changing application code.</span></div><div className="yield-check-control"><button disabled={checking} onClick={()=>void runYieldCheck()}>{checking?"Checking all hotels…":"Run occupancy check now"}</button>{checkSummary&&<small>{checkSummary}</small>}</div></header>
+      {failureDetails.length>0&&<details className="yield-failure-panel"><summary><span>!</span><div><b>{failureDetails.length} Sheet reads need attention</b><small>Open to see the exact hotel, month and reader error.</small></div><i>View details</i></summary><div className="yield-failure-list">{failureDetails.map((failure,index)=><div key={`${failure}-${index}`}><span>{index+1}</span><p>{failure}</p></div>)}</div></details>}
       <section className="yield-hotel-bar"><label><span>SELECT HOTEL</span><select value={hotel} onChange={e=>setHotel(e.target.value)}>{HOTELS.map(([code,name])=><option key={code} value={code}>{name}</option>)}</select></label><div><b>{hotelName}</b><small>{selectedPlans.length} rate {selectedPlans.length===1?"plan":"plans"}</small></div></section>
       <section className="admin-panel">
         <div className="admin-panel-head"><div><h2>Rate plans</h2><p>Create OTA BB, OTA RO or any future plan without a code update.</p></div><div className="rate-plan-actions"><button type="button" disabled={busy} onClick={()=>{setDraft(blankPlan());setCopySource(null)}}>+ Add rate plan</button><button className="primary-admin-button" disabled={busy||!selectedPlans.length} onClick={saveRates}>Save all bands</button></div></div>
