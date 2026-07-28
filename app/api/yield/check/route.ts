@@ -162,23 +162,26 @@ async function requireMaster(request: NextRequest) {
 
   if (!token) return false;
 
-  const client = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  const authClient = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
   const {
     data: { user },
-  } = await client.auth.getUser(token);
+    error: userError,
+  } = await authClient.auth.getUser(token);
 
-  if (!user) return false;
+  if (userError || !user) return false;
 
-  const { data } = await client
+  // The login token proves the caller's identity. Use the secure server client
+  // for the role lookup so this API check is not affected by browser RLS state.
+  const { data, error } = await adminClient()
     .from("occupancy_user_access")
     .select("role,active")
     .eq("user_id", user.id)
     .maybeSingle();
 
-  return data?.active === true && data.role === "MASTER_ADMIN";
+  return !error && data?.active === true && data.role === "MASTER_ADMIN";
 }
 
 async function readMonth(profile: Profile, year: number, month: number) {
