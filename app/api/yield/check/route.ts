@@ -2,7 +2,9 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+// The first baseline can read several future months for all ten hotels.
+// Vercel Hobby supports up to 300 seconds for a function invocation.
+export const maxDuration = 300;
 
 const SUPABASE_URL = "https://otiiioaazkanroyzvlkg.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY =
