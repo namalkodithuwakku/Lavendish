@@ -64,6 +64,10 @@ function savedMonth() {
 export default function Home() {
   const { access, session, signOut } = useAuth();
   const now = new Date();
+  const hasFullPortfolioAccess = Boolean(
+    access?.hotel_codes.includes("ALL") ||
+      hotels.every((item) => access?.hotel_codes.includes(item.code)),
+  );
   const accessibleHotels = useMemo(
     () =>
       access?.hotel_codes.includes("ALL")
@@ -347,6 +351,19 @@ export default function Home() {
             </label>
           </div>
           <div className="header-tools">
+            {(hasFullPortfolioAccess || access?.role === "MASTER_ADMIN") && (
+              <nav className="alert-page-links" aria-label="Alert pages">
+                {hasFullPortfolioAccess && (
+                  <Link href="/group-overview">Group overview</Link>
+                )}
+                {access?.role === "MASTER_ADMIN" && (
+                  <>
+                    <Link href="/alerts/ota">OTA alerts</Link>
+                    <Link href="/alerts/yield">Yield alerts</Link>
+                  </>
+                )}
+              </nav>
+            )}
             <div className="mode-switch" aria-label="Display format">
               <button
                 className={viewMode === "numbers" ? "active" : ""}

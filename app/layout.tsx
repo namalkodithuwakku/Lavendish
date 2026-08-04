@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./readability.css";
 import "./mobile-app.css";
+import "./alert-links.css";
 import { AuthProvider } from "./auth-provider";
 import { PwaClient } from "./pwa-client";
 
