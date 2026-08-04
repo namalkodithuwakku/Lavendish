@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../auth-provider";
 import { hotels } from "../dashboard-data";
 import "./group-overview.css";
@@ -17,6 +17,7 @@ type PortfolioHotel = {
   state: LoadState;
   error?: string;
   updated?: string;
+  needsSync?: boolean;
 };
 
 const AUTO_REFRESH_MS = 5 * 60 * 1000;
@@ -137,7 +138,9 @@ export default function GroupOverviewPage() {
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [portfolio, setPortfolio] = useState<PortfolioHotel[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [backgroundRefreshing, setBackgroundRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const backgroundSyncKey = useRef("");
   const year = monthCursor.getFullYear();
   const month = monthCursor.getMonth() + 1;
   const daysInMonth = new Date(year, month, 0).getDate();
@@ -169,8 +172,9 @@ export default function GroupOverviewPage() {
       for (let attempt = 0; attempt < 2; attempt += 1) {
         try {
           const response = await fetch(
-            `/api/occupancy?hotel=${encodeURIComponent(hotel.code)}&year=${year}&month=${month}&group=1${forceFresh ? "&fresh=1" : ""}`,
+            `/api/occupancy?hotel=${encodeURIComponent(hotel.code)}&year=${year}&month=${month}&group=1`,
             {
+              method: forceFresh ? "POST" : "GET",
               cache: "no-store",
               headers: { Authorization: `Bearer ${session.access_token}` },
             },
@@ -191,6 +195,7 @@ export default function GroupOverviewPage() {
             updated: `${data.lastUpdatedDate || "Sheet"} ${data.lastUpdatedTime || ""}`.trim(),
             state: "ready",
             error: undefined,
+            needsSync: Boolean(data.syncNeeded),
           };
         } catch (error) {
           lastError = error instanceof Error ? error.message : lastError;
@@ -205,6 +210,7 @@ export default function GroupOverviewPage() {
         ...fallback,
         state: hasLastGoodData ? "stale" : "error",
         error: lastError,
+        needsSync: true,
       };
     },
     [daysInMonth, month, session, year],
@@ -253,6 +259,43 @@ export default function GroupOverviewPage() {
     const timer = window.setInterval(() => void loadPortfolio(false), AUTO_REFRESH_MS);
     return () => window.clearInterval(timer);
   }, [hasFullPortfolioAccess, loadPortfolio]);
+  useEffect(() => {
+    if (!session || !hasFullPortfolioAccess || portfolio.length !== hotels.length) return;
+    if (portfolio.some((hotel) => hotel.state === "waiting" || hotel.state === "loading")) return;
+    const pending = portfolio.filter((hotel) => hotel.needsSync);
+    const key = `${year}-${month}`;
+    if (!pending.length || backgroundSyncKey.current === key) return;
+    backgroundSyncKey.current = key;
+    setBackgroundRefreshing(true);
+    let cancelled = false;
+
+    void (async () => {
+      let working = portfolio;
+      for (let index = 0; index < pending.length; index += READ_BATCH_SIZE) {
+        const batch = pending.slice(index, index + READ_BATCH_SIZE);
+        const results = await Promise.all(
+          batch.map((entry) => {
+            const hotel = hotels.find((item) => item.code === entry.code)!;
+            return readHotel(hotel, entry, true);
+          }),
+        );
+        if (cancelled) return;
+        const updates = new Map(results.map((entry) => [entry.code, entry]));
+        working = working.map((entry) => updates.get(entry.code) ?? entry);
+        setPortfolio(working);
+      }
+      if (!cancelled) {
+        saveBrowserCache(year, month, working);
+        setLastUpdated(new Date());
+        setBackgroundRefreshing(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      setBackgroundRefreshing(false);
+    };
+  }, [hasFullPortfolioAccess, month, readHotel, refreshing, session, year]);
   useEffect(() => {
     window.localStorage.setItem("occupancy:groupMonth", `${year}-${month}`);
   }, [month, year]);
@@ -345,9 +388,9 @@ export default function GroupOverviewPage() {
           <div>
             <span className={failedHotels.length ? "partial" : readyHotels.length === 10 ? "live" : "loading"} />
             <b>{readyHotels.length} of 10 hotels loaded</b>
-            <small>{failedHotels.length ? ` • ${failedHotels.length} need attention` : " • Live Google Sheet data"}</small>
+            <small>{backgroundRefreshing ? " • Updating from Sheets in background…" : failedHotels.length ? ` • ${failedHotels.length} need attention` : " • Supabase data ready"}</small>
           </div>
-          <button disabled={refreshing} onClick={() => void loadPortfolio(true)}>{refreshing ? "Refreshing…" : "Refresh all hotels"}</button>
+          <button disabled={refreshing || backgroundRefreshing} onClick={() => void loadPortfolio(true)}>{refreshing || backgroundRefreshing ? "Refreshing…" : "Refresh all hotels"}</button>
         </section>
 
         <section className="group-kpis">

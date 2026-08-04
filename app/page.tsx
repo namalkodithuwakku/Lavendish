@@ -133,14 +133,60 @@ export default function Home() {
       if (cached && !manual) setLiveHotel(cached);
       setRefreshing(true);
       setLiveMessage(
-        manual ? "Refreshing Google Sheet…" : "Checking Google Sheet…",
+        manual ? "Refreshing from Google Sheet…" : "Loading saved occupancy…",
       );
+      const applyData = (
+        data: {
+          hotelName?: string;
+          totalRooms?: number;
+          days?: { day: number; occupied?: number }[];
+          sources?: { name: string; rooms: number; days?: { day: number; rooms: number }[] }[];
+          dailySources?: { day: number; rooms: { name: string; rooms: number }[] }[];
+          functions?: number;
+          allotment?: number;
+          lastUpdatedDate?: string;
+          lastUpdatedTime?: string;
+        },
+      ) => {
+        const occupied = Array.from({ length: daysInMonth }, (_, index) =>
+          Number(data.days?.find((day) => day.day === index + 1)?.occupied ?? 0),
+        );
+        const next: HotelData = {
+          ...baseHotel,
+          name: data.hotelName || baseHotel.name,
+          rooms: Number(data.totalRooms || baseHotel.rooms),
+          occupied,
+          sources: (data.sources ?? []).map((source) => ({
+            name: source.name,
+            rooms: Number(source.rooms || 0),
+            group: sourceGroup(source.name),
+            daily: Array.from({ length: daysInMonth }, (_, index) =>
+              Number(
+                data.dailySources
+                  ?.find((entry) => entry.day === index + 1)
+                  ?.rooms.find((entry) => entry.name === source.name)?.rooms ??
+                  source.days?.find((entry) => entry.day === index + 1)?.rooms ??
+                  0,
+              ),
+            ),
+          })),
+          functions: Number(data.functions || 0),
+          allotment: Number(data.allotment || 0),
+          updated:
+            `${data.lastUpdatedDate || "Saved data"} ${data.lastUpdatedTime || ""}`.trim(),
+          updatedState: "current",
+        };
+        cache.current.set(cacheKey, next);
+        setLiveHotel(next);
+        setLastSuccess(Date.now());
+      };
       let finalError = "Live Sheet is unavailable";
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
           const response = await fetch(
               `/api/occupancy?hotel=${encodeURIComponent(baseHotel.code)}&year=${year}&month=${month}`,
               {
+                method: manual ? "POST" : "GET",
                 cache: "no-store",
                 headers: { Authorization: `Bearer ${session.access_token}` },
               },
@@ -148,56 +194,43 @@ export default function Home() {
             data = await response.json();
           if (!response.ok || !data.success)
             throw new Error(data.error ?? "Live Sheet is unavailable");
-          const occupied = Array.from({ length: daysInMonth }, (_, index) =>
-            Number(
-              data.days?.find((day: { day: number }) => day.day === index + 1)
-                ?.occupied ?? 0,
-            ),
-          );
-          const next: HotelData = {
-            ...baseHotel,
-            name: data.hotelName || baseHotel.name,
-            rooms: Number(data.totalRooms || baseHotel.rooms),
-            occupied,
-            sources: (data.sources ?? []).map(
-              (source: {
-                name: string;
-                rooms: number;
-                days?: { day: number; rooms: number }[];
-              }) => ({
-                name: source.name,
-                rooms: Number(source.rooms || 0),
-                group: sourceGroup(source.name),
-                daily: Array.from({ length: daysInMonth }, (_, index) =>
-                  Number(
-                    data.dailySources
-                      ?.find(
-                        (entry: {
-                          day: number;
-                          rooms: { name: string; rooms: number }[];
-                        }) => entry.day === index + 1,
-                      )
-                      ?.rooms.find(
-                        (entry: { name: string; rooms: number }) =>
-                          entry.name === source.name,
-                      )?.rooms ??
-                      source.days?.find((entry) => entry.day === index + 1)
-                        ?.rooms ??
-                      0,
-                  ),
+          applyData(data);
+          if (!manual && data.syncNeeded) {
+            setLiveMessage("Saved data shown • updating from Google Sheet…");
+            setRefreshing(false);
+            void fetch(
+              `/api/occupancy?hotel=${encodeURIComponent(baseHotel.code)}&year=${year}&month=${month}`,
+              {
+                method: "POST",
+                cache: "no-store",
+                headers: { Authorization: `Bearer ${session.access_token}` },
+              },
+            )
+              .then(async (syncResponse) => {
+                const freshData = await syncResponse.json();
+                if (!syncResponse.ok || !freshData.success)
+                  throw new Error(freshData.error ?? "Background refresh failed");
+                applyData(freshData);
+                setLiveMessage(
+                  freshData.savedToSupabase === false
+                    ? "Live Google Sheet • cache unavailable"
+                    : "Live Google Sheet • saved to Supabase",
+                );
+              })
+              .catch((error) =>
+                setLiveMessage(
+                  `Last successful data kept • ${error instanceof Error ? error.message : "Background refresh failed"}`,
                 ),
-              }),
-            ),
-            functions: Number(data.functions || 0),
-            allotment: Number(data.allotment || 0),
-            updated:
-              `${data.lastUpdatedDate || "Sheet"} ${data.lastUpdatedTime || ""}`.trim(),
-            updatedState: "current",
-          };
-          cache.current.set(cacheKey, next);
-          setLiveHotel(next);
-          setLastSuccess(Date.now());
-          setLiveMessage("Live Google Sheet");
+              );
+            return;
+          }
+          setLiveMessage(
+            data.source === "supabase"
+              ? "Fast saved data • recently synchronized"
+              : data.savedToSupabase === false
+                ? "Live Google Sheet • cache unavailable"
+                : "Live Google Sheet • saved to Supabase",
+          );
           setRefreshing(false);
           return;
         } catch (error) {
@@ -249,6 +282,46 @@ export default function Home() {
   useEffect(() => {
     window.localStorage.setItem("occupancy:lastMonth", `${year}-${month}`);
   }, [month, year]);
+  useEffect(() => {
+    if (!session || !hasFullPortfolioAccess) return;
+    const warmKey = `occupancy:portfolioWarm:${year}-${month}`;
+    const lastWarm = Number(window.localStorage.getItem(warmKey) || 0);
+    if (Date.now() - lastWarm < 10 * 60 * 1000) return;
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        for (let index = 0; index < hotels.length && !cancelled; index += 2) {
+          const batch = hotels.slice(index, index + 2);
+          await Promise.all(
+            batch.map(async (item) => {
+              try {
+                const url = `/api/occupancy?hotel=${encodeURIComponent(item.code)}&year=${year}&month=${month}&group=1`;
+                const cachedResponse = await fetch(url, {
+                  cache: "no-store",
+                  headers: { Authorization: `Bearer ${session.access_token}` },
+                });
+                const cachedData = await cachedResponse.json();
+                if (!cancelled && cachedResponse.ok && cachedData.success && cachedData.syncNeeded)
+                  await fetch(url, {
+                    method: "POST",
+                    cache: "no-store",
+                    headers: { Authorization: `Bearer ${session.access_token}` },
+                  });
+              } catch {
+                // Background warming is best-effort and never interrupts the
+                // selected hotel's dashboard.
+              }
+            }),
+          );
+        }
+        if (!cancelled) window.localStorage.setItem(warmKey, String(Date.now()));
+      })();
+    }, 3000);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [hasFullPortfolioAccess, month, session, year]);
   useEffect(() => {
     setSelectedDay(null);
   }, [cacheKey]);

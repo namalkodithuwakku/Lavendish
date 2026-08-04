@@ -64,6 +64,9 @@ type Snapshot = {
   occupancy_percent: number;
   threshold_level: number | null;
   suggested_rates: SuggestedRate[];
+  source_breakdown?: { name: string; rooms: number }[];
+  functions?: number;
+  allotment?: number;
 };
 
 type SheetDay = {
@@ -71,6 +74,31 @@ type SheetDay = {
   occupied?: number;
   roomsSold?: number;
 };
+
+type SheetSource = {
+  name: string;
+  days?: { day: number; rooms: number }[];
+};
+
+function sourceBreakdown(
+  sheet: {
+    dailySources?: { day: number; rooms: { name: string; rooms: number }[] }[];
+    sources?: SheetSource[];
+  },
+  day: number,
+) {
+  const direct = sheet.dailySources?.find((entry) => entry.day === day)?.rooms;
+  if (direct)
+    return direct
+      .map((entry) => ({ name: String(entry.name).trim(), rooms: Number(entry.rooms || 0) }))
+      .filter((entry) => entry.name && entry.rooms > 0);
+  return (sheet.sources ?? [])
+    .map((source) => ({
+      name: String(source.name).trim(),
+      rooms: Number(source.days?.find((entry) => entry.day === day)?.rooms ?? 0),
+    }))
+    .filter((entry) => entry.name && entry.rooms > 0);
+}
 
 function adminClient() {
   const key = process.env.SUPABASE_SECRET_KEY;
@@ -215,6 +243,10 @@ async function readMonth(profile: Profile, year: number, month: number) {
     days?: SheetDay[];
     lastUpdatedDate?: string;
     lastUpdatedTime?: string;
+    sources?: SheetSource[];
+    dailySources?: { day: number; rooms: { name: string; rooms: number }[] }[];
+    functions?: number;
+    allotment?: number;
   };
 
   if (!data.success) throw new Error(data.error ?? "Sheet reader failed");
@@ -456,6 +488,9 @@ async function runEngine(hotelCode?: string) {
           occupancy_percent: percent,
           threshold_level: thresholdFor(percent, settings.alert_thresholds),
           suggested_rates: rates,
+          source_breakdown: sourceBreakdown(sheet, item.date.getDate()),
+          functions: Number(sheet.functions || 0),
+          allotment: Number(sheet.allotment || 0),
         };
 
         const previous = previousByDate.get(stayDate);
