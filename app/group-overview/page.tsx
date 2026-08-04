@@ -7,7 +7,7 @@ import { hotels } from "../dashboard-data";
 import "./group-overview.css";
 
 type ViewMode = "numbers" | "percentage";
-type LoadState = "waiting" | "loading" | "ready" | "error";
+type LoadState = "waiting" | "loading" | "ready" | "stale" | "error";
 type PortfolioHotel = {
   code: string;
   name: string;
@@ -20,6 +20,8 @@ type PortfolioHotel = {
 };
 
 const AUTO_REFRESH_MS = 5 * 60 * 1000;
+const CACHE_TTL_MS = 5 * 60 * 1000;
+const READ_BATCH_SIZE = 5;
 const HOTEL_CODES = hotels.map((hotel) => hotel.code);
 const WEEKDAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 const monthFormatter = new Intl.DateTimeFormat("en-US", {
@@ -70,6 +72,63 @@ function emptyPortfolio(days: number): PortfolioHotel[] {
   }));
 }
 
+function cacheKey(year: number, month: number) {
+  return `occupancy:groupCache:${year}-${month}`;
+}
+
+function readBrowserCache(year: number, month: number, days: number) {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(cacheKey(year, month));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { savedAt: number; hotels: PortfolioHotel[] };
+    if (!Array.isArray(parsed.hotels) || !Number.isFinite(parsed.savedAt)) return null;
+    const byCode = new Map(parsed.hotels.map((hotel) => [hotel.code, hotel]));
+    return {
+      savedAt: parsed.savedAt,
+      fresh: Date.now() - parsed.savedAt < CACHE_TTL_MS,
+      hotels: hotels.map((hotel) => {
+        const cached = byCode.get(hotel.code);
+        return cached && cached.state !== "error"
+          ? {
+              ...cached,
+              name: cached.name || hotel.name,
+              location: cached.location || hotel.location,
+              rooms: Number(cached.rooms || hotel.rooms),
+              occupied: Array.from({ length: days }, (_, index) =>
+                Number(cached.occupied?.[index] ?? 0),
+              ),
+              state: "ready" as LoadState,
+              error: undefined,
+            }
+          : {
+              code: hotel.code,
+              name: hotel.name,
+              location: hotel.location,
+              rooms: hotel.rooms,
+              occupied: Array(days).fill(0),
+              state: "waiting" as LoadState,
+            };
+      }),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function saveBrowserCache(year: number, month: number, portfolio: PortfolioHotel[]) {
+  if (typeof window === "undefined") return;
+  const cacheable = portfolio.map((hotel) =>
+    hotel.state === "ready" || hotel.state === "stale"
+      ? { ...hotel, state: "ready" as LoadState, error: undefined }
+      : { ...hotel, state: "error" as LoadState },
+  );
+  window.localStorage.setItem(
+    cacheKey(year, month),
+    JSON.stringify({ savedAt: Date.now(), hotels: cacheable }),
+  );
+}
+
 export default function GroupOverviewPage() {
   const { access, session, signOut } = useAuth();
   const now = new Date();
@@ -91,21 +150,26 @@ export default function GroupOverviewPage() {
       HOTEL_CODES.every((code) => access?.hotel_codes.includes(code)),
   );
 
-  const updateHotel = useCallback((code: string, update: Partial<PortfolioHotel>) => {
-    setPortfolio((current) =>
-      current.map((hotel) => (hotel.code === code ? { ...hotel, ...update } : hotel)),
-    );
-  }, []);
-
   const readHotel = useCallback(
-    async (hotel: (typeof hotels)[number]) => {
-      if (!session) return;
-      updateHotel(hotel.code, { state: "loading", error: undefined });
+    async (
+      hotel: (typeof hotels)[number],
+      previous: PortfolioHotel | undefined,
+      forceFresh: boolean,
+    ): Promise<PortfolioHotel> => {
+      const fallback = previous ?? {
+        code: hotel.code,
+        name: hotel.name,
+        location: hotel.location,
+        rooms: hotel.rooms,
+        occupied: Array(daysInMonth).fill(0),
+        state: "waiting" as LoadState,
+      };
+      if (!session) return { ...fallback, state: "error", error: "Session unavailable" };
       let lastError = "Sheet could not be read";
       for (let attempt = 0; attempt < 2; attempt += 1) {
         try {
           const response = await fetch(
-            `/api/occupancy?hotel=${encodeURIComponent(hotel.code)}&year=${year}&month=${month}`,
+            `/api/occupancy?hotel=${encodeURIComponent(hotel.code)}&year=${year}&month=${month}&group=1${forceFresh ? "&fresh=1" : ""}`,
             {
               cache: "no-store",
               headers: { Authorization: `Bearer ${session.access_token}` },
@@ -114,7 +178,8 @@ export default function GroupOverviewPage() {
           const data = await response.json();
           if (!response.ok || !data.success)
             throw new Error(data.error ?? "Sheet could not be read");
-          updateHotel(hotel.code, {
+          return {
+            ...fallback,
             name: data.hotelName || hotel.name,
             rooms: Number(data.totalRooms || hotel.rooms),
             occupied: Array.from({ length: daysInMonth }, (_, index) =>
@@ -126,35 +191,66 @@ export default function GroupOverviewPage() {
             updated: `${data.lastUpdatedDate || "Sheet"} ${data.lastUpdatedTime || ""}`.trim(),
             state: "ready",
             error: undefined,
-          });
-          return;
+          };
         } catch (error) {
           lastError = error instanceof Error ? error.message : lastError;
         }
       }
-      updateHotel(hotel.code, { state: "error", error: lastError });
+      const hasLastGoodData =
+        previous &&
+        (previous.state === "ready" || previous.state === "stale") &&
+        previous.occupied.length === daysInMonth &&
+        previous.occupied.every((value) => Number.isFinite(value));
+      return {
+        ...fallback,
+        state: hasLastGoodData ? "stale" : "error",
+        error: lastError,
+      };
     },
-    [daysInMonth, month, session, updateHotel, year],
+    [daysInMonth, month, session, year],
   );
 
-  const loadPortfolio = useCallback(async () => {
+  const loadPortfolio = useCallback(async (forceFresh = false) => {
     if (!session || !hasFullPortfolioAccess) return;
+    const cached = readBrowserCache(year, month, daysInMonth);
+    let working = cached?.hotels ?? emptyPortfolio(daysInMonth);
+    setPortfolio(working);
+    if (cached) setLastUpdated(new Date(cached.savedAt));
     setRefreshing(true);
-    setPortfolio(emptyPortfolio(daysInMonth));
-    for (let index = 0; index < hotels.length; index += 3) {
-      await Promise.all(hotels.slice(index, index + 3).map((hotel) => readHotel(hotel)));
+    for (let index = 0; index < hotels.length; index += READ_BATCH_SIZE) {
+      const batch = hotels.slice(index, index + READ_BATCH_SIZE);
+      setPortfolio((current) =>
+        current.map((entry) =>
+          batch.some((hotel) => hotel.code === entry.code) && entry.state === "waiting"
+            ? { ...entry, state: "loading" }
+            : entry,
+        ),
+      );
+      const results = await Promise.all(
+        batch.map((hotel) =>
+          readHotel(
+            hotel,
+            working.find((entry) => entry.code === hotel.code),
+            forceFresh,
+          ),
+        ),
+      );
+      const updates = new Map(results.map((entry) => [entry.code, entry]));
+      working = working.map((entry) => updates.get(entry.code) ?? entry);
+      setPortfolio(working);
     }
+    saveBrowserCache(year, month, working);
     setLastUpdated(new Date());
     setRefreshing(false);
-  }, [daysInMonth, hasFullPortfolioAccess, readHotel, session]);
+  }, [daysInMonth, hasFullPortfolioAccess, month, readHotel, session, year]);
 
   useEffect(() => {
     setSelectedDay(null);
-    void loadPortfolio();
+    void loadPortfolio(false);
   }, [loadPortfolio]);
   useEffect(() => {
     if (!hasFullPortfolioAccess) return;
-    const timer = window.setInterval(() => void loadPortfolio(), AUTO_REFRESH_MS);
+    const timer = window.setInterval(() => void loadPortfolio(false), AUTO_REFRESH_MS);
     return () => window.clearInterval(timer);
   }, [hasFullPortfolioAccess, loadPortfolio]);
   useEffect(() => {
@@ -164,8 +260,8 @@ export default function GroupOverviewPage() {
     window.localStorage.setItem("occupancy:groupView", viewMode);
   }, [viewMode]);
 
-  const readyHotels = portfolio.filter((hotel) => hotel.state === "ready");
-  const failedHotels = portfolio.filter((hotel) => hotel.state === "error");
+  const readyHotels = portfolio.filter((hotel) => hotel.state === "ready" || hotel.state === "stale");
+  const failedHotels = portfolio.filter((hotel) => hotel.state === "error" || hotel.state === "stale");
   const inventory = portfolio.reduce((sum, hotel) => sum + hotel.rooms, 0);
   const dailySold = Array.from({ length: daysInMonth }, (_, index) =>
     readyHotels.reduce((sum, hotel) => sum + Number(hotel.occupied[index] ?? 0), 0),
@@ -251,7 +347,7 @@ export default function GroupOverviewPage() {
             <b>{readyHotels.length} of 10 hotels loaded</b>
             <small>{failedHotels.length ? ` • ${failedHotels.length} need attention` : " • Live Google Sheet data"}</small>
           </div>
-          <button disabled={refreshing} onClick={() => void loadPortfolio()}>{refreshing ? "Refreshing…" : "Refresh all hotels"}</button>
+          <button disabled={refreshing} onClick={() => void loadPortfolio(true)}>{refreshing ? "Refreshing…" : "Refresh all hotels"}</button>
         </section>
 
         <section className="group-kpis">
@@ -291,7 +387,8 @@ export default function GroupOverviewPage() {
             {[...portfolio].sort((a, b) => percentage(b.occupied[focusIndex] ?? 0, b.rooms) - percentage(a.occupied[focusIndex] ?? 0, a.rooms)).map((hotel) => {
               const sold = hotel.occupied[focusIndex] ?? 0;
               const occupancy = percentage(sold, hotel.rooms);
-              return <article className={hotel.state === "error" ? "read-error" : ""} key={hotel.code}><div className="group-hotel-name"><span>{hotel.code}</span><div><b>{hotel.name}</b><small>{hotel.state === "error" ? hotel.error : hotel.location}</small></div></div><strong>{hotel.rooms}</strong><strong>{hotel.state === "ready" ? sold : "—"}</strong><strong>{hotel.state === "ready" ? Math.max(0, hotel.rooms - sold) : "—"}</strong><div className="hotel-occupancy"><b>{hotel.state === "ready" ? `${occupancy}%` : hotel.state === "error" ? "Read failed" : "Loading"}</b><span><i style={{ width: hotel.state === "ready" ? `${Math.min(100, occupancy)}%` : "0%" }} /></span></div></article>;
+              const hasData = hotel.state === "ready" || hotel.state === "stale";
+              return <article className={hotel.state === "error" || hotel.state === "stale" ? "read-error" : ""} key={hotel.code}><div className="group-hotel-name"><span>{hotel.code}</span><div><b>{hotel.name}</b><small>{hotel.state === "error" || hotel.state === "stale" ? `${hotel.state === "stale" ? "Last good data • " : ""}${hotel.error}` : hotel.location}</small></div></div><strong>{hotel.rooms}</strong><strong>{hasData ? sold : "—"}</strong><strong>{hasData ? Math.max(0, hotel.rooms - sold) : "—"}</strong><div className="hotel-occupancy"><b>{hasData ? `${occupancy}%${hotel.state === "stale" ? " cached" : ""}` : hotel.state === "error" ? "Read failed" : "Loading"}</b><span><i style={{ width: hasData ? `${Math.min(100, occupancy)}%` : "0%" }} /></span></div></article>;
             })}
           </div>
         </section>
