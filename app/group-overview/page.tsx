@@ -25,6 +25,7 @@ const CACHE_TTL_MS = 5 * 60 * 1000;
 const READ_BATCH_SIZE = 5;
 const HOTEL_CODES = hotels.map((hotel) => hotel.code);
 const WEEKDAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const monthFormatter = new Intl.DateTimeFormat("en-US", {
   month: "long",
   year: "numeric",
@@ -140,7 +141,10 @@ export default function GroupOverviewPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [backgroundRefreshing, setBackgroundRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [monthPickerOpen, setMonthPickerOpen] = useState(false);
+  const [pickerYear, setPickerYear] = useState(() => initialMonth().getFullYear());
   const backgroundSyncKey = useRef("");
+  const monthPickerRef = useRef<HTMLDivElement>(null);
   const year = monthCursor.getFullYear();
   const month = monthCursor.getMonth() + 1;
   const daysInMonth = new Date(year, month, 0).getDate();
@@ -302,6 +306,20 @@ export default function GroupOverviewPage() {
   useEffect(() => {
     window.localStorage.setItem("occupancy:groupView", viewMode);
   }, [viewMode]);
+  useEffect(() => {
+    const closePicker = (event: PointerEvent) => {
+      if (!monthPickerRef.current?.contains(event.target as Node)) setMonthPickerOpen(false);
+    };
+    const closeWithKeyboard = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMonthPickerOpen(false);
+    };
+    document.addEventListener("pointerdown", closePicker);
+    window.addEventListener("keydown", closeWithKeyboard);
+    return () => {
+      document.removeEventListener("pointerdown", closePicker);
+      window.removeEventListener("keydown", closeWithKeyboard);
+    };
+  }, []);
 
   const readyHotels = portfolio.filter((hotel) => hotel.state === "ready" || hotel.state === "stale");
   const failedHotels = portfolio.filter((hotel) => hotel.state === "error" || hotel.state === "stale");
@@ -386,10 +404,18 @@ export default function GroupOverviewPage() {
             <span>Combined occupancy performance across all 10 hotels.</span>
           </div>
           <div className="group-title-actions">
-            <div className="group-month-control">
-              <button aria-label="Previous month" onClick={() => setMonthCursor((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1))}>‹</button>
-              <strong>{monthLabel}</strong>
-              <button aria-label="Next month" onClick={() => setMonthCursor((current) => new Date(current.getFullYear(), current.getMonth() + 1, 1))}>›</button>
+            <div className="month-jump-wrap" ref={monthPickerRef}>
+              <div className="group-month-control">
+                <button aria-label="Previous month" onClick={() => setMonthCursor((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1))}>‹</button>
+                <button className="month-jump-trigger" onClick={() => { setPickerYear(year); setMonthPickerOpen((open) => !open); }} aria-expanded={monthPickerOpen}><strong>{monthLabel}</strong><span>⌄</span></button>
+                <button aria-label="Next month" onClick={() => setMonthCursor((current) => new Date(current.getFullYear(), current.getMonth() + 1, 1))}>›</button>
+              </div>
+              {monthPickerOpen && (
+                <div className="month-jump-panel">
+                  <header><b>Jump to month</b><select aria-label="Select year" value={pickerYear} onChange={(event) => setPickerYear(Number(event.target.value))}>{Array.from({ length: 9 }, (_, index) => now.getFullYear() - 2 + index).map((optionYear) => <option key={optionYear}>{optionYear}</option>)}</select></header>
+                  <div>{MONTH_NAMES.map((name, index) => <button type="button" className={pickerYear === year && index + 1 === month ? "active" : ""} key={name} onClick={() => { setMonthCursor(new Date(pickerYear, index, 1)); setMonthPickerOpen(false); }}>{name}</button>)}</div>
+                </div>
+              )}
             </div>
           </div>
         </header>

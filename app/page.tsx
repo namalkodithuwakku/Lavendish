@@ -8,6 +8,7 @@ import { hotels, type HotelData } from "./dashboard-data";
 type ViewMode = "numbers" | "percentage";
 const AUTO_REFRESH_MS = 5 * 60 * 1000;
 const MOBILE_WEEKDAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const monthFormatter = new Intl.DateTimeFormat("en-US", {
   month: "long",
   year: "numeric",
@@ -81,8 +82,13 @@ export default function Home() {
     [liveMessage, setLiveMessage] = useState("Connecting to Google Sheet…"),
     [refreshing, setRefreshing] = useState(false),
     [lastSuccess, setLastSuccess] = useState(0),
-    [selectedDay, setSelectedDay] = useState<number | null>(null);
+    [selectedDay, setSelectedDay] = useState<number | null>(null),
+    [hotelPickerOpen, setHotelPickerOpen] = useState(false),
+    [monthPickerOpen, setMonthPickerOpen] = useState(false),
+    [pickerYear, setPickerYear] = useState(() => savedMonth().getFullYear());
   const cache = useRef(new Map<string, HotelData>());
+  const hotelPickerRef = useRef<HTMLDivElement>(null);
+  const monthPickerRef = useRef<HTMLDivElement>(null);
   const baseHotel =
     accessibleHotels.find((item) => item.code === hotelCode) ??
     accessibleHotels[0] ??
@@ -325,6 +331,25 @@ export default function Home() {
     window.addEventListener("keydown", close);
     return () => window.removeEventListener("keydown", close);
   }, [selectedDay]);
+  useEffect(() => {
+    const closePickers = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (!hotelPickerRef.current?.contains(target)) setHotelPickerOpen(false);
+      if (!monthPickerRef.current?.contains(target)) setMonthPickerOpen(false);
+    };
+    const closeWithKeyboard = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setHotelPickerOpen(false);
+        setMonthPickerOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", closePickers);
+    window.addEventListener("keydown", closeWithKeyboard);
+    return () => {
+      document.removeEventListener("pointerdown", closePickers);
+      window.removeEventListener("keydown", closeWithKeyboard);
+    };
+  }, []);
 
   const stats = useMemo(() => {
     const selected = hotel.occupied[focusIndex] ?? 0,
@@ -399,21 +424,38 @@ export default function Home() {
       </aside>
       <div className="page">
         <header className="page-header">
-          <div className="hotel-select-wrap">
+          <div className="hotel-select-wrap hotel-picker" ref={hotelPickerRef}>
             <span className="hotel-monogram">{hotel.code}</span>
-            <label>
+            <div className="hotel-picker-content">
               <span>SELECT HOTEL</span>
-              <select
-                value={hotelCode}
-                onChange={(event) => setHotelCode(event.target.value)}
+              <button
+                type="button"
+                className="hotel-picker-trigger"
+                aria-haspopup="listbox"
+                aria-expanded={hotelPickerOpen}
+                onClick={() => setHotelPickerOpen((open) => !open)}
               >
-                {accessibleHotels.map((item) => (
-                  <option key={item.code} value={item.code}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+                <b>{hotel.name}</b><i>{hotelPickerOpen ? "⌃" : "⌄"}</i>
+              </button>
+              {hotelPickerOpen && (
+                <div className="hotel-picker-menu" role="listbox" aria-label="Hotels">
+                  {accessibleHotels.map((item) => (
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={item.code === hotelCode}
+                      className={item.code === hotelCode ? "selected" : ""}
+                      key={item.code}
+                      onClick={() => { setHotelCode(item.code); setHotelPickerOpen(false); }}
+                    >
+                      <span>{item.code}</span>
+                      <div><b>{item.name}</b><small>{item.location}</small></div>
+                      <i>{item.code === hotelCode ? "✓" : ""}</i>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           <div className="header-tools">
             {(hasFullPortfolioAccess || access?.role === "MASTER_ADMIN") && (
@@ -460,14 +502,20 @@ export default function Home() {
               automatically from the hotel Sheet.
             </p>
           </div>
-          <div className="month-control">
-            <button aria-label="Previous month" onClick={() => moveMonth(-1)}>
-              ‹
-            </button>
-            <strong>{monthLabel}</strong>
-            <button aria-label="Next month" onClick={() => moveMonth(1)}>
-              ›
-            </button>
+          <div className="month-jump-wrap" ref={monthPickerRef}>
+            <div className="month-control">
+              <button aria-label="Previous month" onClick={() => moveMonth(-1)}>‹</button>
+              <button className="month-jump-trigger" onClick={() => { setPickerYear(year); setMonthPickerOpen((open) => !open); }} aria-expanded={monthPickerOpen}>
+                <strong>{monthLabel}</strong><span>⌄</span>
+              </button>
+              <button aria-label="Next month" onClick={() => moveMonth(1)}>›</button>
+            </div>
+            {monthPickerOpen && (
+              <div className="month-jump-panel">
+                <header><b>Jump to month</b><select aria-label="Select year" value={pickerYear} onChange={(event) => setPickerYear(Number(event.target.value))}>{Array.from({ length: 9 }, (_, index) => now.getFullYear() - 2 + index).map((optionYear) => <option key={optionYear}>{optionYear}</option>)}</select></header>
+                <div>{MONTH_NAMES.map((name, index) => <button type="button" className={pickerYear === year && index + 1 === month ? "active" : ""} key={name} onClick={() => { setMonthCursor(new Date(pickerYear, index, 1)); setMonthPickerOpen(false); }}>{name}</button>)}</div>
+              </div>
+            )}
           </div>
         </section>
         <section className="number-cards">
