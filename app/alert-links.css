@@ -23,6 +23,12 @@
   background: #f2eefb;
 }
 
+.alert-page-links a.active {
+  border-color: #d8cfed;
+  background: #eee9f8;
+  color: #5c478e;
+}
+
 @media (max-width: 760px) {
   .alert-page-links {
     order: 3;

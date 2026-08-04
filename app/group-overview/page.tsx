@@ -350,18 +350,32 @@ export default function GroupOverviewPage() {
 
   return (
     <main className="group-shell">
+      <aside className="rail group-rail">
+        <div className="logo">LH</div>
+        <nav aria-label="Administration">
+          {access?.role === "MASTER_ADMIN" && (
+            <Link className="rail-button rail-link" href="/admin" aria-label="Admin hotel profiles">⚙</Link>
+          )}
+        </nav>
+      </aside>
       <header className="group-topbar">
         <Link className="group-brand" href="/">
-          <span>LH</span>
-          <div><b>Lavendish Intelligence</b><small>N K Hotels</small></div>
+          <span>ALL</span>
+          <div><small>PORTFOLIO VIEW</small><b>Lavendish Intelligence</b></div>
         </Link>
-        <nav aria-label="Main navigation">
-          <Link href="/">Hotel view</Link>
-          <Link className="active" href="/group-overview">Group overview</Link>
-          {access?.role === "MASTER_ADMIN" && <Link href="/alerts/ota">OTA alerts</Link>}
-          {access?.role === "MASTER_ADMIN" && <Link href="/alerts/yield">Yield alerts</Link>}
-        </nav>
-        <button onClick={signOut}>{firstName} ↗</button>
+        <div className="header-tools">
+          <nav className="alert-page-links" aria-label="Main views">
+            <Link href="/">Hotel view</Link>
+            <Link className="active" href="/group-overview">Group overview</Link>
+            {access?.role === "MASTER_ADMIN" && <Link href="/alerts/ota">OTA alerts</Link>}
+            {access?.role === "MASTER_ADMIN" && <Link href="/alerts/yield">Yield alerts</Link>}
+          </nav>
+          <div className="mode-switch" aria-label="Display format">
+            <button className={viewMode === "numbers" ? "active" : ""} onClick={() => setViewMode("numbers")}>Numbers</button>
+            <button className={viewMode === "percentage" ? "active" : ""} onClick={() => setViewMode("percentage")}>Percentage</button>
+          </div>
+          <button className="user-button" onClick={signOut} title="Sign out">{firstName} <span>↗</span></button>
+        </div>
       </header>
 
       <section className="group-page">
@@ -372,10 +386,6 @@ export default function GroupOverviewPage() {
             <span>Combined occupancy performance across all 10 hotels.</span>
           </div>
           <div className="group-title-actions">
-            <div className="group-view-switch" aria-label="Display format">
-              <button className={viewMode === "numbers" ? "active" : ""} onClick={() => setViewMode("numbers")}>Numbers</button>
-              <button className={viewMode === "percentage" ? "active" : ""} onClick={() => setViewMode("percentage")}>Percentage</button>
-            </div>
             <div className="group-month-control">
               <button aria-label="Previous month" onClick={() => setMonthCursor((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1))}>‹</button>
               <strong>{monthLabel}</strong>

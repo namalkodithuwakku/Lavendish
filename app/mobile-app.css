@@ -1,5 +1,6 @@
 /* Mobile application layer. Desktop styles are intentionally untouched. */
-.pwa-install,.mobile-calendar-weekdays,.mobile-calendar-spacer{display:none}
+.pwa-install,.mobile-calendar-weekdays{display:none}
+.mobile-calendar-spacer{display:block}
 @media(max-width:720px){
   body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
   button,select,a{touch-action:manipulation}

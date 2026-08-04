@@ -15,7 +15,6 @@ const monthFormatter = new Intl.DateTimeFormat("en-US", {
 const shortMonthFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",
 });
-const weekdayFormatter = new Intl.DateTimeFormat("en-US", { weekday: "short" });
 const wait = (ms: number) =>
   new Promise((resolve) => window.setTimeout(resolve, ms));
 function pct(value: number, total: number) {
@@ -117,13 +116,6 @@ export default function Home() {
       monthCursor,
     ),
     shortMonth = shortMonthFormatter.format(monthCursor).toUpperCase();
-  const weekdays = useMemo(
-    () =>
-      Array.from({ length: 7 }, (_, index) =>
-        weekdayFormatter.format(new Date(year, month - 1, index + 1)),
-      ),
-    [year, month],
-  );
   const mobileMonthStartOffset = (new Date(year, month - 1, 1).getDay() + 6) % 7;
 
   const loadLive = useCallback(
@@ -425,7 +417,8 @@ export default function Home() {
           </div>
           <div className="header-tools">
             {(hasFullPortfolioAccess || access?.role === "MASTER_ADMIN") && (
-              <nav className="alert-page-links" aria-label="Alert pages">
+              <nav className="alert-page-links" aria-label="Main views">
+                <Link className="active" href="/">Hotel view</Link>
                 {hasFullPortfolioAccess && (
                   <Link href="/group-overview">Group overview</Link>
                 )}
@@ -570,7 +563,7 @@ export default function Home() {
               </button>
             </div>
             <div className="calendar-weekdays desktop-calendar-weekdays">
-              {weekdays.map((day) => (
+              {MOBILE_WEEKDAYS.map((day) => (
                 <span key={day}>{day}</span>
               ))}
             </div>
