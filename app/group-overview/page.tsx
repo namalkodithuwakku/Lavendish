@@ -143,6 +143,9 @@ export default function GroupOverviewPage() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const [pickerYear, setPickerYear] = useState(() => initialMonth().getFullYear());
+  const [sidebarOpen, setSidebarOpen] = useState(() =>
+    typeof window === "undefined" ? true : window.localStorage.getItem("lavendish:sidebar") !== "closed",
+  );
   const backgroundSyncKey = useRef("");
   const monthPickerRef = useRef<HTMLDivElement>(null);
   const year = monthCursor.getFullYear();
@@ -307,6 +310,9 @@ export default function GroupOverviewPage() {
     window.localStorage.setItem("occupancy:groupView", viewMode);
   }, [viewMode]);
   useEffect(() => {
+    window.localStorage.setItem("lavendish:sidebar", sidebarOpen ? "open" : "closed");
+  }, [sidebarOpen]);
+  useEffect(() => {
     const closePicker = (event: PointerEvent) => {
       if (!monthPickerRef.current?.contains(event.target as Node)) setMonthPickerOpen(false);
     };
@@ -367,16 +373,24 @@ export default function GroupOverviewPage() {
     );
 
   return (
-    <main className="group-shell">
-      <aside className="rail group-rail">
-        <div className="logo">LH</div>
-        <nav aria-label="Administration">
-          {access?.role === "MASTER_ADMIN" && (
-            <Link className="rail-button rail-link" href="/admin" aria-label="Admin hotel profiles">⚙</Link>
-          )}
+    <main className={`group-shell ${sidebarOpen ? "sidebar-expanded" : "sidebar-collapsed"}`}>
+      <aside className={`rail group-rail ${sidebarOpen ? "expanded" : "collapsed"}`}>
+        <div className="rail-brand">
+          <div className="logo">LI</div>
+          <div className="rail-brand-copy"><b>Lavendish</b><span>Intelligence</span></div>
+          <button className="rail-collapse" onClick={() => setSidebarOpen((open) => !open)} aria-label={sidebarOpen ? "Hide menu" : "Open menu"}>{sidebarOpen ? "‹" : "›"}</button>
+        </div>
+        <nav aria-label="Main navigation">
+          <Link className="rail-nav-link" href="/"><span>HV</span><b>Hotel view</b></Link>
+          <Link className="rail-nav-link active" href="/group-overview"><span>GO</span><b>Group overview</b></Link>
+          {access?.role === "MASTER_ADMIN" && <Link className="rail-nav-link" href="/alerts/ota"><span>OTA</span><b>OTA alerts</b></Link>}
+          {access?.role === "MASTER_ADMIN" && <Link className="rail-nav-link" href="/alerts/yield"><span>YM</span><b>Yield alerts</b></Link>}
+          {access?.role === "MASTER_ADMIN" && <Link className="rail-nav-link" href="/admin"><span>AD</span><b>Administration</b></Link>}
         </nav>
+        <div className="nkh-authority"><span>NKH</span><div><b>System by</b><strong>N K Hotels</strong></div></div>
       </aside>
       <header className="group-topbar">
+        <button className="mobile-menu-toggle" onClick={() => setSidebarOpen((open) => !open)} aria-label="Open navigation menu">☰</button>
         <Link className="group-brand" href="/">
           <span>ALL</span>
           <div><small>PORTFOLIO VIEW</small><b>Lavendish Intelligence</b></div>

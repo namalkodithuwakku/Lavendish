@@ -85,7 +85,10 @@ export default function Home() {
     [selectedDay, setSelectedDay] = useState<number | null>(null),
     [hotelPickerOpen, setHotelPickerOpen] = useState(false),
     [monthPickerOpen, setMonthPickerOpen] = useState(false),
-    [pickerYear, setPickerYear] = useState(() => savedMonth().getFullYear());
+    [pickerYear, setPickerYear] = useState(() => savedMonth().getFullYear()),
+    [sidebarOpen, setSidebarOpen] = useState(() =>
+      typeof window === "undefined" ? true : window.localStorage.getItem("lavendish:sidebar") !== "closed",
+    );
   const cache = useRef(new Map<string, HotelData>());
   const hotelPickerRef = useRef<HTMLDivElement>(null);
   const monthPickerRef = useRef<HTMLDivElement>(null);
@@ -281,6 +284,9 @@ export default function Home() {
     window.localStorage.setItem("occupancy:lastMonth", `${year}-${month}`);
   }, [month, year]);
   useEffect(() => {
+    window.localStorage.setItem("lavendish:sidebar", sidebarOpen ? "open" : "closed");
+  }, [sidebarOpen]);
+  useEffect(() => {
     if (!session || !hasFullPortfolioAccess) return;
     const warmKey = `occupancy:portfolioWarm:${year}-${month}`;
     const lastWarm = Number(window.localStorage.getItem(warmKey) || 0);
@@ -407,23 +413,25 @@ export default function Home() {
       "User";
 
   return (
-    <main className="app">
-      <aside className="rail">
-        <div className="logo">LH</div>
+    <main className={`app ${sidebarOpen ? "sidebar-expanded" : "sidebar-collapsed"}`}>
+      <aside className={`rail ${sidebarOpen ? "expanded" : "collapsed"}`}>
+        <div className="rail-brand">
+          <div className="logo">LI</div>
+          <div className="rail-brand-copy"><b>Lavendish</b><span>Intelligence</span></div>
+          <button className="rail-collapse" onClick={() => setSidebarOpen((open) => !open)} aria-label={sidebarOpen ? "Hide menu" : "Open menu"}>{sidebarOpen ? "‹" : "›"}</button>
+        </div>
         <nav aria-label="Main navigation">
-          {access?.role === "MASTER_ADMIN" && (
-            <Link
-              className="rail-button rail-link"
-              href="/admin"
-              aria-label="Admin hotel profiles"
-            >
-              ⚙
-            </Link>
-          )}
+          <Link className="rail-nav-link active" href="/"><span>HV</span><b>Hotel view</b></Link>
+          {hasFullPortfolioAccess && <Link className="rail-nav-link" href="/group-overview"><span>GO</span><b>Group overview</b></Link>}
+          {access?.role === "MASTER_ADMIN" && <Link className="rail-nav-link" href="/alerts/ota"><span>OTA</span><b>OTA alerts</b></Link>}
+          {access?.role === "MASTER_ADMIN" && <Link className="rail-nav-link" href="/alerts/yield"><span>YM</span><b>Yield alerts</b></Link>}
+          {access?.role === "MASTER_ADMIN" && <Link className="rail-nav-link" href="/admin"><span>AD</span><b>Administration</b></Link>}
         </nav>
+        <div className="nkh-authority"><span>NKH</span><div><b>System by</b><strong>N K Hotels</strong></div></div>
       </aside>
       <div className="page">
         <header className="page-header">
+          <button className="mobile-menu-toggle" onClick={() => setSidebarOpen((open) => !open)} aria-label="Open navigation menu">☰</button>
           <div className="hotel-select-wrap hotel-picker" ref={hotelPickerRef}>
             <span className="hotel-monogram">{hotel.code}</span>
             <div className="hotel-picker-content">

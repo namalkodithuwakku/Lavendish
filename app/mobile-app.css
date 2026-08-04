@@ -5,9 +5,10 @@
   body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
   button,select,a{touch-action:manipulation}
   .app{min-height:100dvh}
-  .rail{display:none}
+  .rail{display:flex;inset:0 auto 0 0;width:min(82vw,280px);height:100dvh;padding:calc(14px + env(safe-area-inset-top)) 12px calc(14px + env(safe-area-inset-bottom));background:#fff;transform:translateX(-105%);box-shadow:18px 0 55px rgba(38,31,50,.24);z-index:120}
+  .rail.expanded{width:min(82vw,280px);transform:translateX(0)}.rail.collapsed{width:min(82vw,280px);transform:translateX(-105%)}.rail.collapsed .rail-brand-copy,.rail.collapsed .nkh-authority div,.rail.collapsed .rail-nav-link b{display:grid}.rail.collapsed .rail-collapse{position:static;width:30px;height:30px;margin-left:auto}.rail nav{flex-direction:column;margin:28px 0 auto}.rail-nav-link{min-height:54px}.rail-nav-link b{font-size:16px}.nkh-authority b{font-size:12px}.nkh-authority strong{font-size:15px}
   .page{margin:0;padding:0 14px calc(28px + env(safe-area-inset-bottom))}
-  .page-header{position:sticky;top:0;z-index:30;margin:0 -14px;padding:calc(10px + env(safe-area-inset-top)) 14px 12px;background:rgba(255,255,255,.96);backdrop-filter:blur(14px);align-items:center;gap:10px}
+  .page-header{position:sticky;top:0;z-index:30;margin:0 -14px;padding:calc(10px + env(safe-area-inset-top)) 14px 12px;background:rgba(255,255,255,.96);backdrop-filter:blur(14px);align-items:center;gap:10px}.mobile-menu-toggle{display:grid;place-items:center}
   .hotel-select-wrap{min-width:0;flex:1}.hotel-monogram{width:42px;height:42px;flex:0 0 auto;border-radius:12px;font-size:10px}
   .hotel-select-wrap label{min-width:0;flex:1}.hotel-select-wrap label>span{font-size:10px!important}.hotel-select-wrap select{width:100%;min-width:0!important;min-height:30px;font-size:15px!important;text-overflow:ellipsis}
   .header-tools{flex:0 0 auto;display:block}.mode-switch{padding:3px}.mode-switch button{min-width:50px;min-height:38px;padding:6px 9px!important;font-size:12px!important}.user-button{display:none}

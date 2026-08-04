@@ -124,3 +124,10 @@
   .hotel-occupancy { min-width:68px; }
 }
 @media (max-width:480px) { .group-kpis { grid-template-columns:1fr 1fr; gap:7px; } .group-kpis article { min-height:132px; padding:16px 13px; } .group-kpis article>b { font-size:27px; } .group-status-bar small { display:none; } .group-status-bar button { padding:0 11px; font-size:12px; } }
+
+/* Keep the same collapsible shell in Group Overview. */
+.group-shell.sidebar-expanded .group-topbar{margin-left:244px}.group-shell.sidebar-expanded .group-page{width:min(1568px,calc(100% - 244px));margin-left:244px}.group-shell.sidebar-collapsed .group-topbar{margin-left:68px}.group-shell.sidebar-collapsed .group-page{width:min(1568px,calc(100% - 68px));margin-left:68px}.group-topbar,.group-page{transition:margin-left .22s ease,width .22s ease}
+
+/* Group readability floor. */
+.group-brand small,.group-kpis article>span,.group-weekdays span,.group-calendar-grid button>span,.group-calendar-grid button>small,.group-day-summary>header p,.group-hotel-head,.group-hotel-name>span{font-size:12px}.group-brand b,.group-status-bar small,.group-kpis article>small,.group-calendar-panel>header>span,.group-hotel-name small{font-size:13px}.group-status-bar>div,.group-status-bar button,.group-calendar-panel p,.group-hotel-panel p,.group-day-summary dt,.group-hotel-name b,.hotel-occupancy>b{font-size:14px}
+@media(max-width:820px){.group-shell.sidebar-expanded .group-topbar,.group-shell.sidebar-collapsed .group-topbar{margin-left:0}.group-shell.sidebar-expanded .group-page,.group-shell.sidebar-collapsed .group-page{width:100%;margin-left:0}.group-topbar>.mobile-menu-toggle{display:grid;place-items:center}.group-calendar-grid button>small{font-size:11px}}
