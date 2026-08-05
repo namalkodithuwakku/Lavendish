@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../auth-provider";
 import { hotels } from "../dashboard-data";
+import { masterNavigation, NavigationIcon } from "../navigation-icons";
 import "./group-overview.css";
 
 type ViewMode = "numbers" | "percentage";
@@ -379,12 +380,10 @@ export default function GroupOverviewPage() {
           <div className="rail-brand-copy"><b>Lavendish</b><span>Intelligence</span></div>
         </div>
         <nav aria-label="Main navigation">
-          <Link className="rail-nav-link" href="/"><span>HV</span><b>Hotel view</b></Link>
-          <Link className="rail-nav-link active" href="/group-overview"><span>GO</span><b>Group overview</b></Link>
-          {access?.role === "MASTER_ADMIN" && <Link className="rail-nav-link" href="/intelligence"><span>IN</span><b>Intelligence</b></Link>}
-          {access?.role === "MASTER_ADMIN" && <Link className="rail-nav-link" href="/alerts/ota"><span>OTA</span><b>OTA alerts</b></Link>}
-          {access?.role === "MASTER_ADMIN" && <Link className="rail-nav-link" href="/alerts/yield"><span>YM</span><b>Yield alerts</b></Link>}
-          {access?.role === "MASTER_ADMIN" && <Link className="rail-nav-link" href="/admin"><span>AD</span><b>Administration</b></Link>}
+          <Link className="rail-nav-link" href="/"><span><NavigationIcon name="hotel"/></span><b>Hotel Occupancy</b></Link>
+          <Link className="rail-nav-link active" href="/group-overview"><span><NavigationIcon name="group"/></span><b>Group Occupancy</b></Link>
+          {access?.role === "MASTER_ADMIN" && masterNavigation.map(item=><Link className="rail-nav-link" href={item.href} key={item.href}><span><NavigationIcon name={item.icon}/></span><b>{item.label}</b></Link>)}
+          {access?.role === "MASTER_ADMIN" && <Link className="rail-nav-link" href="/admin"><span><NavigationIcon name="admin"/></span><b>Administration</b></Link>}
         </nav>
         <div className="nkh-authority"><span>NKH</span><div><b>System by</b><strong>N K Hotels</strong></div></div>
       </aside>

@@ -4,19 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useAuth } from "../auth-provider";
+import { masterNavigation, NavigationIcon, type NavigationIconName } from "../navigation-icons";
 import "./intelligence.css";
 
-const menu = [
-  {href:"/",label:"Hotel Occupancy",icon:"HV",section:"OCCUPANCY"},
-  {href:"/group-overview",label:"Group Occupancy",icon:"GO",section:"OCCUPANCY"},
-  {href:"/intelligence",label:"Overview",icon:"OV",section:"INTELLIGENCE"},
-  {href:"/intelligence/ota",label:"OTA",icon:"OT",section:"INTELLIGENCE"},
-  {href:"/intelligence/yield",label:"Yield",icon:"YL",section:"INTELLIGENCE"},
-  {href:"/intelligence/marketing",label:"Marketing",icon:"MK",section:"INTELLIGENCE"},
-  {href:"/properties",label:"Properties",icon:"PR",section:"MANAGEMENT"},
-  {href:"/reputation",label:"Reputation",icon:"RP",section:"MANAGEMENT"},
-  {href:"/reports",label:"Reports",icon:"RT",section:"MANAGEMENT"},
-  {href:"/settings/intelligence",label:"Settings",icon:"ST",section:"MANAGEMENT"},
+const menu=[
+ {href:"/",label:"Hotel Occupancy",icon:"hotel" as NavigationIconName,section:"OCCUPANCY"},
+ {href:"/group-overview",label:"Group Occupancy",icon:"group" as NavigationIconName,section:"OCCUPANCY"},
+ ...masterNavigation.map((item,index)=>({...item,section:index<4?"PERFORMANCE":"MANAGEMENT"})),
 ];
 
 function isActive(pathname:string,href:string){return href==="/intelligence"?pathname==="/intelligence":href==="/"?pathname==="/":pathname.startsWith(href)}
@@ -30,10 +24,10 @@ export function IntelligenceShell({eyebrow,title,actions,children}:{eyebrow:stri
   return <main className="intel-app">
     <aside className="intel-rail">
       <Link className="intel-brand" href="/intelligence"><span>NKH</span><div><b>Occupancy Intelligence</b><small>Lavendish Leisure</small></div></Link>
-      <nav className="intel-menu" aria-label="Intelligence navigation">{menuWithSections.map(item=><span key={item.href}>{item.showSection&&<small className="intel-menu-label">{item.section}</small>}<Link className={isActive(pathname,item.href)?"active":""} href={item.href} title={item.label}><span>{item.icon}</span><b>{item.label}</b></Link></span>)}</nav>
+      <nav className="intel-menu" aria-label="Main navigation">{menuWithSections.map(item=><span key={item.href}>{item.showSection&&<small className="intel-menu-label">{item.section}</small>}<Link className={isActive(pathname,item.href)?"active":""} href={item.href} title={item.label}><span><NavigationIcon name={item.icon}/></span><b>{item.label}</b></Link></span>)}</nav>
       <div className="intel-master"><span>NK</span><div><b>Master Control</b><small>All modules enabled</small></div></div>
     </aside>
     <section className="intel-main"><header className="intel-topbar"><div><p>{eyebrow}</p><h1>{title}</h1></div><div>{actions}</div></header>{children}</section>
-    <nav className="intel-mobile-nav" aria-label="Mobile intelligence navigation">{menu.filter(item=>["/","/intelligence","/intelligence/ota","/intelligence/yield","/intelligence/marketing"].includes(item.href)).map(item=><Link className={isActive(pathname,item.href)?"active":""} href={item.href} key={item.href}><span>{item.icon}</span><b>{item.label.replace(" Occupancy","")}</b></Link>)}</nav>
+    <nav className="intel-mobile-nav" aria-label="Mobile navigation">{menu.filter(item=>["/","/group-overview","/intelligence","/intelligence/ota","/intelligence/yield"].includes(item.href)).map(item=><Link className={isActive(pathname,item.href)?"active":""} href={item.href} key={item.href}><span><NavigationIcon name={item.icon}/></span><b>{item.label.replace(" Occupancy","")}</b></Link>)}</nav>
   </main>
 }

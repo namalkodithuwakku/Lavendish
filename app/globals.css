@@ -37,6 +37,10 @@
 .rail.collapsed .rail-brand-copy,.rail.collapsed .nkh-authority div,.rail.collapsed .rail-nav-link b,.rail.collapsed nav::before{display:none}.rail.collapsed .rail-brand{padding:0}.rail.collapsed .logo{width:38px;height:38px;flex-basis:38px}.rail.collapsed nav{margin-top:34px}.rail.collapsed .rail-nav-link{justify-content:center;padding:5px}.rail.collapsed .nkh-authority{padding-left:2px;padding-right:2px}
 @media(max-width:720px){.rail{padding:20px 14px 16px}.rail.expanded{width:min(82vw,280px)}.rail .rail-collapse,.rail.collapsed .rail-collapse{position:fixed;left:0;top:52%;width:41px;height:80px;margin:0;transform:translateY(-50%);border-radius:0 12px 12px 0}.rail.expanded .rail-collapse{left:min(82vw,280px)}.rail nav{margin-top:48px}.rail.collapsed nav::before{display:block}.sidebar-expanded .page,.sidebar-collapsed .page{margin-left:0}}
 
+.rail nav{overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none}
+.rail nav::-webkit-scrollbar{width:0;height:0;display:none}
+.rail-nav-link>span svg,.intel-menu a>span svg{width:19px;height:19px}
+
 /* Compact icon rail: no external MENU/CLOSE tab. */
 .rail .rail-collapse,.rail.collapsed .rail-collapse,.rail.expanded .rail-collapse{position:absolute;left:auto;right:-12px;top:31px;z-index:35;width:27px;height:27px;display:grid;place-items:center;margin:0;padding:0;transform:none;border:1px solid #41515d;border-radius:50%;background:#253540;color:#c9d6dc;box-shadow:0 5px 14px rgba(8,18,25,.24);transition:background .16s,color .16s,transform .16s}
 .rail .rail-collapse:hover,.rail.expanded .rail-collapse:hover,.rail.collapsed .rail-collapse:hover{background:#ff9914;border-color:#ff9914;color:#fff;transform:scale(1.06)}
