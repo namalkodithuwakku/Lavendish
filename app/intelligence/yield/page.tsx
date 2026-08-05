@@ -1,3 +1,8 @@
 import { IntelligenceShell } from "../intelligence-shell";
-import { ModuleClient } from "../module-client";
-export default function YieldPage(){return <IntelligenceShell eyebrow="RATE MANAGEMENT" title="Yield"><ModuleClient category="YIELD"/></IntelligenceShell>}
+import { YieldWorkspace } from "./yield-workspace";
+import "../../admin/admin.css";
+import "../../admin/yield/yield.css";
+import "../../admin/yield/rate-plan-manager.css";
+import "./yield-workspace.css";
+
+export default function YieldPage(){return <IntelligenceShell eyebrow="RATE MANAGEMENT" title="Yield"><YieldWorkspace/></IntelligenceShell>}
