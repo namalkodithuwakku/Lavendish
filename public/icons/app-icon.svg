@@ -1,1 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#7463a8"/><circle cx="405" cy="108" r="88" fill="#8f7fbb" opacity=".7"/><circle cx="98" cy="430" r="130" fill="#5c4b8d" opacity=".8"/><path d="M143 138h52v96h122v-96h52v236h-52v-93H195v93h-52V138Z" fill="#fff"/><path d="M239 138h52v236h-52z" fill="#eeeaf8" opacity=".9"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="64" y1="36" x2="448" y2="480" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A989BF"/>
+      <stop offset="1" stop-color="#7463A8"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#2B2630"/>
+  <rect x="28" y="28" width="456" height="456" rx="96" fill="url(#bg)"/>
+  <text x="256" y="310" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="145" font-weight="700" text-anchor="middle" letter-spacing="-9">NKH</text>
+</svg>
