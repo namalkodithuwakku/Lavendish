@@ -143,9 +143,7 @@ export default function GroupOverviewPage() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const [pickerYear, setPickerYear] = useState(() => initialMonth().getFullYear());
-  const [sidebarOpen, setSidebarOpen] = useState(() =>
-    typeof window === "undefined" ? true : window.localStorage.getItem("lavendish:sidebar") !== "closed",
-  );
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const backgroundSyncKey = useRef("");
   const monthPickerRef = useRef<HTMLDivElement>(null);
   const year = monthCursor.getFullYear();
@@ -310,9 +308,6 @@ export default function GroupOverviewPage() {
     window.localStorage.setItem("occupancy:groupView", viewMode);
   }, [viewMode]);
   useEffect(() => {
-    window.localStorage.setItem("lavendish:sidebar", sidebarOpen ? "open" : "closed");
-  }, [sidebarOpen]);
-  useEffect(() => {
     const closePicker = (event: PointerEvent) => {
       if (!monthPickerRef.current?.contains(event.target as Node)) setMonthPickerOpen(false);
     };
@@ -374,11 +369,14 @@ export default function GroupOverviewPage() {
 
   return (
     <main className={`group-shell ${sidebarOpen ? "sidebar-expanded" : "sidebar-collapsed"}`}>
-      <aside className={`rail group-rail ${sidebarOpen ? "expanded" : "collapsed"}`}>
+      <aside
+        className={`rail group-rail ${sidebarOpen ? "expanded" : "collapsed"}`}
+        onMouseEnter={() => { if (window.matchMedia("(hover: hover)").matches) setSidebarOpen(true); }}
+        onMouseLeave={() => { if (window.matchMedia("(hover: hover)").matches) setSidebarOpen(false); }}
+      >
         <div className="rail-brand">
           <div className="logo">LI</div>
           <div className="rail-brand-copy"><b>Lavendish</b><span>Intelligence</span></div>
-          <button className="rail-collapse" onClick={() => setSidebarOpen((open) => !open)} aria-label={sidebarOpen ? "Hide menu" : "Open menu"}>{sidebarOpen ? "‹" : "›"}</button>
         </div>
         <nav aria-label="Main navigation">
           <Link className="rail-nav-link" href="/"><span>HV</span><b>Hotel view</b></Link>
@@ -389,6 +387,7 @@ export default function GroupOverviewPage() {
         </nav>
         <div className="nkh-authority"><span>NKH</span><div><b>System by</b><strong>N K Hotels</strong></div></div>
       </aside>
+      {sidebarOpen && <button className="rail-backdrop" aria-label="Close navigation menu" onClick={() => setSidebarOpen(false)} />}
       <header className="group-topbar">
         <button className="mobile-menu-toggle" onClick={() => setSidebarOpen((open) => !open)} aria-label="Open navigation menu">☰</button>
         <Link className="group-brand" href="/">
@@ -396,12 +395,6 @@ export default function GroupOverviewPage() {
           <div><small>PORTFOLIO VIEW</small><b>Lavendish Intelligence</b></div>
         </Link>
         <div className="header-tools">
-          <nav className="alert-page-links" aria-label="Main views">
-            <Link href="/">Hotel view</Link>
-            <Link className="active" href="/group-overview">Group overview</Link>
-            {access?.role === "MASTER_ADMIN" && <Link href="/alerts/ota">OTA alerts</Link>}
-            {access?.role === "MASTER_ADMIN" && <Link href="/alerts/yield">Yield alerts</Link>}
-          </nav>
           <div className="mode-switch" aria-label="Display format">
             <button className={viewMode === "numbers" ? "active" : ""} onClick={() => setViewMode("numbers")}>Numbers</button>
             <button className={viewMode === "percentage" ? "active" : ""} onClick={() => setViewMode("percentage")}>Percentage</button>

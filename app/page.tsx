@@ -86,9 +86,7 @@ export default function Home() {
     [hotelPickerOpen, setHotelPickerOpen] = useState(false),
     [monthPickerOpen, setMonthPickerOpen] = useState(false),
     [pickerYear, setPickerYear] = useState(() => savedMonth().getFullYear()),
-    [sidebarOpen, setSidebarOpen] = useState(() =>
-      typeof window === "undefined" ? true : window.localStorage.getItem("lavendish:sidebar") !== "closed",
-    );
+    [sidebarOpen, setSidebarOpen] = useState(false);
   const cache = useRef(new Map<string, HotelData>());
   const hotelPickerRef = useRef<HTMLDivElement>(null);
   const monthPickerRef = useRef<HTMLDivElement>(null);
@@ -284,9 +282,6 @@ export default function Home() {
     window.localStorage.setItem("occupancy:lastMonth", `${year}-${month}`);
   }, [month, year]);
   useEffect(() => {
-    window.localStorage.setItem("lavendish:sidebar", sidebarOpen ? "open" : "closed");
-  }, [sidebarOpen]);
-  useEffect(() => {
     if (!session || !hasFullPortfolioAccess) return;
     const warmKey = `occupancy:portfolioWarm:${year}-${month}`;
     const lastWarm = Number(window.localStorage.getItem(warmKey) || 0);
@@ -414,11 +409,14 @@ export default function Home() {
 
   return (
     <main className={`app ${sidebarOpen ? "sidebar-expanded" : "sidebar-collapsed"}`}>
-      <aside className={`rail ${sidebarOpen ? "expanded" : "collapsed"}`}>
+      <aside
+        className={`rail ${sidebarOpen ? "expanded" : "collapsed"}`}
+        onMouseEnter={() => { if (window.matchMedia("(hover: hover)").matches) setSidebarOpen(true); }}
+        onMouseLeave={() => { if (window.matchMedia("(hover: hover)").matches) setSidebarOpen(false); }}
+      >
         <div className="rail-brand">
           <div className="logo">LI</div>
           <div className="rail-brand-copy"><b>Lavendish</b><span>Intelligence</span></div>
-          <button className="rail-collapse" onClick={() => setSidebarOpen((open) => !open)} aria-label={sidebarOpen ? "Hide menu" : "Open menu"}>{sidebarOpen ? "‹" : "›"}</button>
         </div>
         <nav aria-label="Main navigation">
           <Link className="rail-nav-link active" href="/"><span>HV</span><b>Hotel view</b></Link>
@@ -429,6 +427,7 @@ export default function Home() {
         </nav>
         <div className="nkh-authority"><span>NKH</span><div><b>System by</b><strong>N K Hotels</strong></div></div>
       </aside>
+      {sidebarOpen && <button className="rail-backdrop" aria-label="Close navigation menu" onClick={() => setSidebarOpen(false)} />}
       <div className="page">
         <header className="page-header">
           <button className="mobile-menu-toggle" onClick={() => setSidebarOpen((open) => !open)} aria-label="Open navigation menu">☰</button>
@@ -466,20 +465,6 @@ export default function Home() {
             </div>
           </div>
           <div className="header-tools">
-            {(hasFullPortfolioAccess || access?.role === "MASTER_ADMIN") && (
-              <nav className="alert-page-links" aria-label="Main views">
-                <Link className="active" href="/">Hotel view</Link>
-                {hasFullPortfolioAccess && (
-                  <Link href="/group-overview">Group overview</Link>
-                )}
-                {access?.role === "MASTER_ADMIN" && (
-                  <>
-                    <Link href="/alerts/ota">OTA alerts</Link>
-                    <Link href="/alerts/yield">Yield alerts</Link>
-                  </>
-                )}
-              </nav>
-            )}
             <div className="mode-switch" aria-label="Display format">
               <button
                 className={viewMode === "numbers" ? "active" : ""}
