@@ -421,6 +421,7 @@ export default function Home() {
         <nav aria-label="Main navigation">
           <Link className="rail-nav-link active" href="/"><span>HV</span><b>Hotel view</b></Link>
           {hasFullPortfolioAccess && <Link className="rail-nav-link" href="/group-overview"><span>GO</span><b>Group overview</b></Link>}
+          {access?.role === "MASTER_ADMIN" && <Link className="rail-nav-link" href="/intelligence"><span>IN</span><b>Intelligence</b></Link>}
           {access?.role === "MASTER_ADMIN" && <Link className="rail-nav-link" href="/alerts/ota"><span>OTA</span><b>OTA alerts</b></Link>}
           {access?.role === "MASTER_ADMIN" && <Link className="rail-nav-link" href="/alerts/yield"><span>YM</span><b>Yield alerts</b></Link>}
           {access?.role === "MASTER_ADMIN" && <Link className="rail-nav-link" href="/admin"><span>AD</span><b>Administration</b></Link>}

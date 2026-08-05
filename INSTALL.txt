@@ -1,0 +1,67 @@
+LAVENDISH OCCUPANCY CACHE + GROUP AND ALERT PAGES
+
+SAFE DEPLOYMENT ORDER
+
+1. In the existing Supabase project, open SQL Editor and run:
+   supabase/occupancy_snapshot_cache.sql
+
+   This is additive and safe to run again. It extends the existing occupancy
+   snapshots used by Yield Management and adds short-lived synchronization locks.
+
+2. If the OTA/Yield alert database was not installed previously, also run once:
+   supabase/yield_alert_workflow.sql
+
+3. Copy every app/ and supabase/ file into the matching location in the project.
+
+4. Keep the existing Vercel environment variables:
+   NEXT_PUBLIC_SUPABASE_URL
+   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+   SUPABASE_SECRET_KEY
+   OCCUPANCY_SCRIPT_URL
+   OCCUPANCY_API_TOKEN
+   YIELD_CRON_SECRET
+
+5. Optional Vercel environment variable:
+   OCCUPANCY_CACHE_ENABLED=true
+
+   The cache is enabled by default, so this variable is optional. Set it to
+   false and redeploy to return immediately to direct Google Sheet reads.
+
+6. Commit and push to main. Vercel will redeploy automatically.
+
+HOW IT WORKS
+
+- Google Sheets remain the authoritative data source.
+- Calendars first show the most recent successful Supabase snapshot.
+- If the saved data is old or incomplete, the app refreshes Google Sheets in
+  the background and updates the screen without making it blank.
+- Incomplete, timed-out or failed Sheet reads never overwrite good saved data.
+- Multiple users opening the app cannot start duplicate refreshes for the same
+  hotel and month at the same time.
+- Viewing an individual hotel quietly prepares the other permitted hotels so
+  Group Overview opens faster.
+- Existing Yield checks also refresh the same occupancy snapshots.
+- No Google Apps Script changes are required.
+
+FIRST USE
+
+Open one individual hotel and wait for its background refresh. Then open Group
+Overview. The first full synchronization can take longer; later visits should
+show saved Supabase data immediately while Sheet checks happen in the background.
+
+PAGES
+
+  /group-overview
+  /alerts/ota
+  /alerts/yield
+
+ACCESS
+
+Group Overview is available to users with ALL access or all 10 hotel codes.
+OTA and Yield alert pages and their data are restricted to MASTER_ADMIN.
+Other users do not see those alert links and cannot update alerts.
+
+ALERT WORKFLOW
+
+New -> Following -> Actioned
+Alerts can also be dismissed. No task system is used.
