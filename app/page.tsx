@@ -442,7 +442,7 @@ export default function Home() {
                 aria-expanded={hotelPickerOpen}
                 onClick={() => setHotelPickerOpen((open) => !open)}
               >
-                <b>{hotel.name}</b><i>{hotelPickerOpen ? "⌃" : "⌄"}</i>
+                <b>{hotel.name}</b>
               </button>
               {hotelPickerOpen && (
                 <div className="hotel-picker-menu" role="listbox" aria-label="Hotels">
@@ -456,7 +456,7 @@ export default function Home() {
                       onClick={() => { setHotelCode(item.code); setHotelPickerOpen(false); }}
                     >
                       <span>{item.code}</span>
-                      <div><b>{item.name}</b><small>{item.location}</small></div>
+                      <div><b>{item.name}</b></div>
                       <i>{item.code === hotelCode ? "✓" : ""}</i>
                     </button>
                   ))}
@@ -499,13 +499,13 @@ export default function Home() {
             <div className="month-control">
               <button aria-label="Previous month" onClick={() => moveMonth(-1)}>‹</button>
               <button className="month-jump-trigger" onClick={() => { setPickerYear(year); setMonthPickerOpen((open) => !open); }} aria-expanded={monthPickerOpen}>
-                <strong>{monthLabel}</strong><span>⌄</span>
+                <strong>{monthLabel}</strong>
               </button>
               <button aria-label="Next month" onClick={() => moveMonth(1)}>›</button>
             </div>
             {monthPickerOpen && (
               <div className="month-jump-panel">
-                <header><b>Jump to month</b><select aria-label="Select year" value={pickerYear} onChange={(event) => setPickerYear(Number(event.target.value))}>{Array.from({ length: 9 }, (_, index) => now.getFullYear() - 2 + index).map((optionYear) => <option key={optionYear}>{optionYear}</option>)}</select></header>
+                <header><select aria-label="Select year" value={pickerYear} onChange={(event) => setPickerYear(Number(event.target.value))}>{Array.from({ length: 9 }, (_, index) => now.getFullYear() - 2 + index).map((optionYear) => <option key={optionYear}>{optionYear}</option>)}</select></header>
                 <div>{MONTH_NAMES.map((name, index) => <button type="button" className={pickerYear === year && index + 1 === month ? "active" : ""} key={name} onClick={() => { setMonthCursor(new Date(pickerYear, index, 1)); setMonthPickerOpen(false); }}>{name}</button>)}</div>
               </div>
             )}

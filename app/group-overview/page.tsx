@@ -392,7 +392,7 @@ export default function GroupOverviewPage() {
         <button className="mobile-menu-toggle" onClick={() => setSidebarOpen((open) => !open)} aria-label="Open navigation menu">☰</button>
         <Link className="group-brand" href="/">
           <span>ALL</span>
-          <div><small>PORTFOLIO VIEW</small><b>Lavendish Intelligence</b></div>
+          <div><small>PORTFOLIO VIEW</small><b>Lavendish Leisure Performance</b></div>
         </Link>
         <div className="header-tools">
           <div className="mode-switch" aria-label="Display format">
@@ -414,12 +414,12 @@ export default function GroupOverviewPage() {
             <div className="month-jump-wrap" ref={monthPickerRef}>
               <div className="group-month-control">
                 <button aria-label="Previous month" onClick={() => setMonthCursor((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1))}>‹</button>
-                <button className="month-jump-trigger" onClick={() => { setPickerYear(year); setMonthPickerOpen((open) => !open); }} aria-expanded={monthPickerOpen}><strong>{monthLabel}</strong><span>⌄</span></button>
+                <button className="month-jump-trigger" onClick={() => { setPickerYear(year); setMonthPickerOpen((open) => !open); }} aria-expanded={monthPickerOpen}><strong>{monthLabel}</strong></button>
                 <button aria-label="Next month" onClick={() => setMonthCursor((current) => new Date(current.getFullYear(), current.getMonth() + 1, 1))}>›</button>
               </div>
               {monthPickerOpen && (
                 <div className="month-jump-panel">
-                  <header><b>Jump to month</b><select aria-label="Select year" value={pickerYear} onChange={(event) => setPickerYear(Number(event.target.value))}>{Array.from({ length: 9 }, (_, index) => now.getFullYear() - 2 + index).map((optionYear) => <option key={optionYear}>{optionYear}</option>)}</select></header>
+                  <header><select aria-label="Select year" value={pickerYear} onChange={(event) => setPickerYear(Number(event.target.value))}>{Array.from({ length: 9 }, (_, index) => now.getFullYear() - 2 + index).map((optionYear) => <option key={optionYear}>{optionYear}</option>)}</select></header>
                   <div>{MONTH_NAMES.map((name, index) => <button type="button" className={pickerYear === year && index + 1 === month ? "active" : ""} key={name} onClick={() => { setMonthCursor(new Date(pickerYear, index, 1)); setMonthPickerOpen(false); }}>{name}</button>)}</div>
                 </div>
               )}
@@ -466,17 +466,36 @@ export default function GroupOverviewPage() {
           </aside>
         </section>
 
-        <section className="group-hotel-panel">
-          <header><div><h2>Hotel performance</h2><p>Room position for {focusDay} {monthLabel}, ranked by occupancy.</p></div></header>
-          <div className="group-hotel-table">
-            <div className="group-hotel-head"><span>Hotel</span><span>Rooms</span><span>Sold</span><span>Available</span><span>Occupancy</span></div>
-            {[...portfolio].sort((a, b) => percentage(b.occupied[focusIndex] ?? 0, b.rooms) - percentage(a.occupied[focusIndex] ?? 0, a.rooms)).map((hotel) => {
-              const sold = hotel.occupied[focusIndex] ?? 0;
-              const occupancy = percentage(sold, hotel.rooms);
-              const hasData = hotel.state === "ready" || hotel.state === "stale";
-              return <article className={hotel.state === "error" || hotel.state === "stale" ? "read-error" : ""} key={hotel.code}><div className="group-hotel-name"><span>{hotel.code}</span><div><b>{hotel.name}</b><small>{hotel.state === "error" || hotel.state === "stale" ? `${hotel.state === "stale" ? "Last good data • " : ""}${hotel.error}` : hotel.location}</small></div></div><strong>{hotel.rooms}</strong><strong>{hasData ? sold : "—"}</strong><strong>{hasData ? Math.max(0, hotel.rooms - sold) : "—"}</strong><div className="hotel-occupancy"><b>{hasData ? `${occupancy}%${hotel.state === "stale" ? " cached" : ""}` : hotel.state === "error" ? "Read failed" : "Loading"}</b><span><i style={{ width: hasData ? `${Math.min(100, occupancy)}%` : "0%" }} /></span></div></article>;
-            })}
-          </div>
+        <section className="group-performance-breakdowns">
+          <section className="group-hotel-panel">
+            <header><div><h2>Day Performance Breakdown</h2><p>Hotel position for {focusDay} {monthLabel}, ranked by occupancy.</p></div></header>
+            <div className="group-hotel-table">
+              <div className="group-hotel-head"><span>Hotel</span><span>Rooms</span><span>Sold</span><span>Available</span><span>Occupancy</span></div>
+              {[...portfolio].sort((a, b) => percentage(b.occupied[focusIndex] ?? 0, b.rooms) - percentage(a.occupied[focusIndex] ?? 0, a.rooms)).map((hotel) => {
+                const sold = hotel.occupied[focusIndex] ?? 0;
+                const occupancy = percentage(sold, hotel.rooms);
+                const hasData = hotel.state === "ready" || hotel.state === "stale";
+                return <article className={hotel.state === "error" || hotel.state === "stale" ? "read-error" : ""} key={hotel.code}><div className="group-hotel-name"><span>{hotel.code}</span><div><b>{hotel.name}</b><small>{hotel.state === "error" || hotel.state === "stale" ? `${hotel.state === "stale" ? "Last good data • " : ""}${hotel.error}` : hotel.location}</small></div></div><strong>{hotel.rooms}</strong><strong>{hasData ? sold : "—"}</strong><strong>{hasData ? Math.max(0, hotel.rooms - sold) : "—"}</strong><div className="hotel-occupancy"><b>{hasData ? `${occupancy}%${hotel.state === "stale" ? " cached" : ""}` : hotel.state === "error" ? "Read failed" : "Loading"}</b><span><i style={{ width: hasData ? `${Math.min(100, occupancy)}%` : "0%" }} /></span></div></article>;
+              })}
+            </div>
+          </section>
+          <section className="group-hotel-panel month-breakdown">
+            <header><div><h2>Month Performance Breakdown</h2><p>Room-night performance for {monthLabel}, ranked by occupancy.</p></div></header>
+            <div className="group-hotel-table">
+              <div className="group-hotel-head"><span>Hotel</span><span>Inventory</span><span>Sold</span><span>Available</span><span>Occupancy</span></div>
+              {[...portfolio].sort((a, b) => {
+                const bSold = b.occupied.reduce((sum, value) => sum + Number(value || 0), 0);
+                const aSold = a.occupied.reduce((sum, value) => sum + Number(value || 0), 0);
+                return percentage(bSold, b.rooms * daysInMonth) - percentage(aSold, a.rooms * daysInMonth);
+              }).map((hotel) => {
+                const sold = hotel.occupied.reduce((sum, value) => sum + Number(value || 0), 0);
+                const capacity = hotel.rooms * daysInMonth;
+                const occupancy = percentage(sold, capacity);
+                const hasData = hotel.state === "ready" || hotel.state === "stale";
+                return <article className={hotel.state === "error" || hotel.state === "stale" ? "read-error" : ""} key={hotel.code}><div className="group-hotel-name"><span>{hotel.code}</span><div><b>{hotel.name}</b><small>{hotel.state === "error" || hotel.state === "stale" ? `${hotel.state === "stale" ? "Last good data • " : ""}${hotel.error}` : hotel.location}</small></div></div><strong>{capacity.toLocaleString()}</strong><strong>{hasData ? sold.toLocaleString() : "—"}</strong><strong>{hasData ? Math.max(0, capacity - sold).toLocaleString() : "—"}</strong><div className="hotel-occupancy"><b>{hasData ? `${occupancy}%${hotel.state === "stale" ? " cached" : ""}` : hotel.state === "error" ? "Read failed" : "Loading"}</b><span><i style={{ width: hasData ? `${Math.min(100, occupancy)}%` : "0%" }} /></span></div></article>;
+              })}
+            </div>
+          </section>
         </section>
       </section>
     </main>

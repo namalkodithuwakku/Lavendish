@@ -75,6 +75,11 @@
 .group-day-summary dt { color:#77717d; font-size:14px; }
 .group-day-summary dd { margin:0; font-size:17px; font-weight:800; }
 .group-hotel-panel { padding:22px; }
+.group-performance-breakdowns { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; align-items:start; }
+.group-performance-breakdowns .group-hotel-panel { min-width:0; }
+.group-performance-breakdowns .group-hotel-head,.group-performance-breakdowns .group-hotel-table article { grid-template-columns:minmax(170px,1.65fr) repeat(3,minmax(58px,.55fr)) minmax(118px,1fr); gap:9px; }
+.month-breakdown .group-hotel-name>span { background:#e7f3f6; color:#246f86; }
+.month-breakdown .hotel-occupancy span i { background:#2897b2; }
 .group-hotel-table { display:grid; }
 .group-hotel-head,.group-hotel-table article { display:grid; grid-template-columns:minmax(280px,2fr) repeat(3,minmax(75px,.55fr)) minmax(150px,1fr); align-items:center; gap:12px; }
 .group-hotel-head { padding:0 14px 10px; color:#8a8390; font-size:11px; font-weight:850; letter-spacing:.06em; }
@@ -96,7 +101,7 @@
 .group-access-blocked h1 { margin:20px 0 10px; font-size:28px; }
 .group-access-blocked p { margin:0; color:#77717d; font-size:16px; line-height:1.55; }
 .group-access-blocked a { min-height:48px; display:inline-flex; align-items:center; margin-top:22px; padding:0 20px; border-radius:12px; background:#6c559f; color:#fff; font-weight:750; text-decoration:none; }
-@media (max-width:1180px) { .group-kpis { grid-template-columns:repeat(3,1fr); } .group-content-grid { grid-template-columns:1fr; } .group-day-summary { display:none; } }
+@media (max-width:1180px) { .group-performance-breakdowns { grid-template-columns:1fr; } .group-kpis { grid-template-columns:repeat(3,1fr); } .group-content-grid { grid-template-columns:1fr; } .group-day-summary { display:none; } }
 @media (max-width:820px) {
   .group-topbar { height:auto; margin-left:0; align-items:flex-start; flex-wrap:wrap; gap:10px; padding:11px 15px; }
   .group-brand { min-width:0; flex:1; }
