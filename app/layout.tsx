@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./readability.css";
 import "./mobile-app.css";
@@ -9,16 +8,6 @@ import "./intelligence/mobile-super-app.css";
 import { AuthProvider } from "./auth-provider";
 import { MobileBottomNav } from "./mobile-bottom-nav";
 import { PwaClient } from "./pwa-client";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: { default: "NKH Performance Hub", template: "%s | NKH Performance Hub" },
@@ -54,9 +43,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body>
         <AuthProvider>{children}<MobileBottomNav /></AuthProvider>
         <PwaClient />
       </body>

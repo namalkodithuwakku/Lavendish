@@ -1,4 +1,4 @@
-.integrated-alerts{--a-ink:#182830;--a-muted:#667780;--a-line:#dfe7ea}
+.integrated-alerts{--a-ink:#2b2630;--a-muted:#77717d;--a-line:#e6dfe6}
 .integrated-alerts .alerts-page{width:min(1320px,calc(100% - 48px));padding:22px 0 56px;color:var(--a-ink)}
 .integrated-alerts .alerts-title{gap:20px}.integrated-alerts .alerts-title p{margin-bottom:5px;font-size:10px}.integrated-alerts .alerts-title h1{margin-bottom:5px;font-size:25px;line-height:1.15}.integrated-alerts .alerts-title span{color:var(--a-muted);font-size:12px;line-height:1.45}.integrated-alerts .alerts-title>button{height:38px;border:0;border-radius:10px;background:#203743;color:#fff;padding:0 15px;font-size:11px}
 .integrated-alerts .alert-kpis{gap:9px;margin-top:18px}.integrated-alerts .alert-kpis article{padding:14px 15px;border-color:var(--a-line);border-radius:12px}.integrated-alerts .alert-kpis span{font-size:9px}.integrated-alerts .alert-kpis b{margin:6px 0 2px;font-size:24px}.integrated-alerts .alert-kpis small{font-size:10px}
