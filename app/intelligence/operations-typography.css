@@ -1,0 +1,30 @@
+.ops-workspace{font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.4;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.ops-command>div:first-child>span{font-size:10px}
+.ops-command p{font-size:12px}
+.ops-command label span{font-size:10px}
+.ops-command select,.ops-command button{font-family:inherit;font-size:12px}
+.ops-summary span{font-size:10px}
+.ops-summary b{font-size:18px}
+.ops-notice{font-size:12px}
+.ops-hotel>span{font-size:10px}
+.ops-hotel b{font-size:13px}
+.ops-hotel small{font-size:11px}
+.ops-tags span{font-size:10px}
+.ops-decision>small{font-size:10px}
+.ops-decision h3{font-size:18px}
+.ops-decision p{font-size:11px}
+.ops-metrics dt{font-size:10px}
+.ops-metrics dd{font-size:19px}
+.ops-metrics dd small{font-size:11px}
+.ops-rate-options small{font-size:10px}
+.ops-rate-options b{font-size:14px}
+.ops-alert>footer>small{font-size:10px}
+.ops-alert>footer button{font-family:inherit;font-size:11px}
+.ops-empty b{font-size:14px}
+.ops-empty p,.ops-gate a{font-size:11px}
+.yield-workspace-tabs button{font-family:Arial,Helvetica,sans-serif}
+.yield-workspace-tabs button b{font-size:12px}
+.yield-workspace-tabs button span{font-size:10px}
+.intel-main:has(.ops-workspace) .intel-topbar p{font-size:10px}
+.intel-main:has(.ops-workspace) .intel-topbar h1{font-family:Arial,Helvetica,sans-serif;font-size:24px}
+@media(max-width:720px){.ops-command p{font-size:11px}.ops-decision h3{font-size:16px}.ops-decision p{font-size:11px}.ops-metrics dd{font-size:17px}.ops-alert>footer button{font-size:10px}}
