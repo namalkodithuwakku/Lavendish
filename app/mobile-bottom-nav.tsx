@@ -16,7 +16,8 @@ const adminIcon = <svg {...iconProps}><circle cx="12" cy="8" r="3.2"/><path d="M
 export function MobileBottomNav() {
   const pathname = usePathname();
   const { access, session } = useAuth();
-  if (!session || !access || pathname === "/login") return null;
+  const intelligenceArea=pathname.startsWith("/intelligence")||pathname.startsWith("/properties")||pathname.startsWith("/reputation")||pathname.startsWith("/reports")||pathname.startsWith("/settings/");
+  if (!session || !access || pathname === "/login" || intelligenceArea) return null;
 
   const fullPortfolio = access.hotel_codes.includes("ALL");
   const master = access.role === "MASTER_ADMIN";

@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { useState } from "react";
 import { useAuth } from "../auth-provider";
 import { masterNavigation, NavigationIcon, type NavigationIconName } from "../navigation-icons";
 import "./intelligence.css";
+import "./mobile-super-app.css";
 
 const menu=[
  {href:"/",label:"Hotel Occupancy",icon:"hotel" as NavigationIconName,section:"OCCUPANCY"},
@@ -18,6 +20,7 @@ function isActive(pathname:string,href:string){if(href==="/settings/intelligence
 export function IntelligenceShell({eyebrow,title,actions,children}:{eyebrow:string;title:string;actions?:ReactNode;children:ReactNode}){
   const pathname=usePathname();
   const {access,session}=useAuth();
+  const [moreOpen,setMoreOpen]=useState(false);
   if(!session||!access)return <main className="intel-access"><section><span>NK</span><h1>Checking secure access</h1><p>Please wait while your access is confirmed.</p></section></main>;
   if(access.role!=="MASTER_ADMIN")return <main className="intel-access"><section><span>!</span><h1>Master access required</h1><p>The new intelligence modules are currently available only to the Master Admin. Your Hotel and Group Occupancy access is unchanged.</p><Link href="/">Return to occupancy</Link></section></main>;
   const menuWithSections=menu.map((item,index)=>({...item,showSection:index===0||menu[index-1].section!==item.section}));
@@ -28,6 +31,8 @@ export function IntelligenceShell({eyebrow,title,actions,children}:{eyebrow:stri
       <div className="intel-master"><span>NK</span><div><b>Master Control</b><small>All modules enabled</small></div></div>
     </aside>
     <section className="intel-main"><header className="intel-topbar"><div><p>{eyebrow}</p><h1>{title}</h1></div><div>{actions}</div></header>{children}</section>
-    <nav className="intel-mobile-nav" aria-label="Mobile navigation">{menu.filter(item=>["/","/group-overview","/intelligence","/intelligence/ota","/intelligence/yield"].includes(item.href)).map(item=><Link className={isActive(pathname,item.href)?"active":""} href={item.href} key={item.href}><span><NavigationIcon name={item.icon}/></span><b>{item.label.replace(" Occupancy","")}</b></Link>)}</nav>
+    {moreOpen&&<button className="mobile-more-backdrop" aria-label="Close more menu" onClick={()=>setMoreOpen(false)}/>} 
+    <section className={`mobile-more-sheet ${moreOpen?"open":""}`} aria-hidden={!moreOpen}><header><div><small>MASTER WORKSPACE</small><h2>More</h2></div><button onClick={()=>setMoreOpen(false)} aria-label="Close more menu">×</button></header><div>{[...masterNavigation.filter(item=>!["/intelligence/ota","/intelligence/yield"].includes(item.href)),{href:"/admin",label:"Administration",icon:"admin" as const}].map(item=><Link className={isActive(pathname,item.href)?"active":""} href={item.href} key={item.href} onClick={()=>setMoreOpen(false)}><span><NavigationIcon name={item.icon}/></span><div><b>{item.label}</b><small>{item.href==="/intelligence"?"Portfolio command center":item.href==="/intelligence/marketing"?"Demand opportunities":item.href==="/properties"?"Hotel profiles and sources":item.href==="/reputation"?"Reviews and responses":item.href==="/reports"?"Management reporting":item.href.startsWith("/settings")?"Users, schedules and access":"Hotel administration"}</small></div></Link>)}</div></section>
+    <nav className="intel-mobile-nav" aria-label="Mobile app navigation">{menu.filter(item=>["/","/group-overview","/intelligence/ota","/intelligence/yield"].includes(item.href)).map(item=><Link className={isActive(pathname,item.href)?"active":""} href={item.href} key={item.href}><span><NavigationIcon name={item.icon}/></span><b>{item.label.replace(" Occupancy","")}</b></Link>)}<button className={moreOpen||!["/","/group-overview","/intelligence/ota","/intelligence/yield"].some(href=>isActive(pathname,href))?"active":""} onClick={()=>setMoreOpen(open=>!open)}><span><NavigationIcon name="more"/></span><b>More</b></button></nav>
   </main>
 }

@@ -1,0 +1,281 @@
+/* Mobile application shell for the master workspace. Desktop remains unchanged. */
+@media (max-width: 720px) {
+  .intel-app {
+    min-height: 100dvh;
+    background: #f4f6f7;
+  }
+
+  .intel-main {
+    min-width: 0;
+    padding-bottom: calc(82px + env(safe-area-inset-bottom));
+  }
+
+  .intel-topbar {
+    min-height: 70px;
+    padding: 13px 18px;
+    gap: 10px;
+  }
+
+  .intel-topbar p {
+    font-size: 10px;
+    letter-spacing: .13em;
+  }
+
+  .intel-topbar h1 {
+    font-size: 22px;
+    line-height: 1.15;
+  }
+
+  .intel-topbar > div:last-child {
+    flex: 0 0 auto;
+  }
+
+  .intel-page {
+    padding: 16px 14px 26px;
+  }
+
+  .intel-mobile-nav {
+    position: fixed;
+    z-index: 240;
+    left: 10px;
+    right: 10px;
+    bottom: calc(8px + env(safe-area-inset-bottom));
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    height: 66px;
+    padding: 5px;
+    border: 1px solid rgba(205, 214, 220, .92);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, .96);
+    box-shadow: 0 14px 42px rgba(17, 39, 51, .22);
+    backdrop-filter: blur(18px);
+  }
+
+  .intel-mobile-nav a,
+  .intel-mobile-nav button {
+    display: flex;
+    min-width: 0;
+    min-height: 54px;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 3px;
+    padding: 4px 2px;
+    border: 0;
+    border-radius: 15px;
+    color: #687984;
+    background: transparent;
+    font: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .intel-mobile-nav a > span,
+  .intel-mobile-nav button > span {
+    display: grid;
+    width: 25px;
+    height: 25px;
+    place-items: center;
+  }
+
+  .intel-mobile-nav svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  .intel-mobile-nav b {
+    overflow: hidden;
+    max-width: 100%;
+    font-size: 10px !important;
+    font-weight: 750;
+    line-height: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .intel-mobile-nav a.active,
+  .intel-mobile-nav button.active {
+    color: #173746;
+    background: #e7f4f8;
+  }
+
+  .mobile-more-backdrop {
+    position: fixed;
+    z-index: 245;
+    inset: 0;
+    border: 0;
+    background: rgba(11, 27, 36, .52);
+    backdrop-filter: blur(3px);
+  }
+
+  .mobile-more-sheet {
+    position: fixed;
+    z-index: 250;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    max-height: 82dvh;
+    overflow: auto;
+    padding: 9px 14px calc(96px + env(safe-area-inset-bottom));
+    border-radius: 26px 26px 0 0;
+    background: #fff;
+    box-shadow: 0 -18px 54px rgba(12, 31, 41, .24);
+    transform: translateY(110%);
+    transition: transform .24s cubic-bezier(.2, .8, .2, 1);
+    pointer-events: none;
+  }
+
+  .mobile-more-sheet::before {
+    display: block;
+    width: 42px;
+    height: 4px;
+    margin: 0 auto 8px;
+    border-radius: 99px;
+    background: #d6dde1;
+    content: "";
+  }
+
+  .mobile-more-sheet.open {
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .mobile-more-sheet > header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 3px 13px;
+  }
+
+  .mobile-more-sheet header small {
+    color: #f08a18;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .12em;
+  }
+
+  .mobile-more-sheet header h2 {
+    margin: 2px 0 0;
+    color: #142f3d;
+    font-size: 23px;
+  }
+
+  .mobile-more-sheet header button {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    place-items: center;
+    border: 1px solid #dbe2e6;
+    border-radius: 50%;
+    color: #334f5d;
+    background: #f6f8f9;
+    font-size: 25px;
+    line-height: 1;
+  }
+
+  .mobile-more-sheet > div {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+  }
+
+  .mobile-more-sheet a {
+    display: flex;
+    min-width: 0;
+    min-height: 88px;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 13px 11px;
+    border: 1px solid #e0e6e9;
+    border-radius: 17px;
+    color: #173746;
+    background: #f9fafb;
+    text-decoration: none;
+  }
+
+  .mobile-more-sheet a > span {
+    display: grid;
+    width: 35px;
+    height: 35px;
+    flex: 0 0 35px;
+    place-items: center;
+    border-radius: 11px;
+    color: #6e58ae;
+    background: #eeeaf8;
+  }
+
+  .mobile-more-sheet a svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .mobile-more-sheet a div {
+    min-width: 0;
+  }
+
+  .mobile-more-sheet a b {
+    display: block;
+    font-size: 13px;
+    line-height: 1.25;
+  }
+
+  .mobile-more-sheet a small {
+    display: block;
+    margin-top: 4px;
+    color: #7b8b94;
+    font-size: 10px;
+    line-height: 1.35;
+  }
+
+  .mobile-more-sheet a.active {
+    border-color: #8fc9d9;
+    background: #edf8fb;
+    box-shadow: inset 3px 0 #f49a18;
+  }
+
+  /* Keep dense management pages usable with one hand. */
+  .intel-toolbar,
+  .intel-filterbar,
+  .settings-control-row,
+  .settings-access-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .intel-toolbar select,
+  .intel-toolbar button,
+  .intel-filterbar select,
+  .intel-filterbar button,
+  .settings-control-row select,
+  .settings-control-row button {
+    min-height: 44px;
+    width: 100%;
+  }
+
+  .intel-property-grid,
+  .intel-schedule-grid,
+  .settings-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .intel-modal {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .intel-modal > section {
+    width: 100%;
+    max-height: 90dvh;
+    overflow: auto;
+    border-radius: 24px 24px 0 0;
+    padding-bottom: calc(22px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (min-width: 721px) {
+  .mobile-more-backdrop,
+  .mobile-more-sheet {
+    display: none;
+  }
+}
