@@ -1,5 +1,6 @@
 /* Mobile application layer. Desktop styles are intentionally untouched. */
 .pwa-install,.mobile-calendar-weekdays{display:none}
+.mobile-bottom-nav{display:none}
 .mobile-calendar-spacer{display:block}
 @media(max-width:720px){
   body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
@@ -34,4 +35,40 @@
   .rail.collapsed .rail-collapse{right:-12px}
   .sidebar-collapsed .page{margin-left:0}
   .rail-backdrop{position:fixed;inset:0;z-index:110;display:block;padding:0;border:0;background:rgba(12,20,27,.35);backdrop-filter:blur(2px)}
+}
+
+/* Native-style mobile app shell. */
+@media(max-width:720px){
+  :root{--mobile-app-nav-height:72px}
+  body{padding-bottom:calc(var(--mobile-app-nav-height) + env(safe-area-inset-bottom));background:#f4f5f7}
+  .rail,.group-rail,.admin-nav{display:none!important}
+  .rail-backdrop,.mobile-menu-toggle{display:none!important}
+  .page,.group-page,.alerts-page,.admin-page{width:100%!important;margin-left:0!important;padding-bottom:30px}
+
+  .mobile-bottom-nav{position:fixed;z-index:200;right:0;bottom:0;left:0;min-height:calc(var(--mobile-app-nav-height) + env(safe-area-inset-bottom));display:flex;align-items:flex-start;justify-content:space-around;padding:7px 7px calc(7px + env(safe-area-inset-bottom));border-top:1px solid #e3e4e8;background:rgba(255,255,255,.96);box-shadow:0 -8px 28px rgba(27,35,43,.1);backdrop-filter:blur(18px)}
+  .mobile-bottom-nav a{position:relative;min-width:58px;min-height:56px;display:grid;align-content:center;justify-items:center;gap:3px;border-radius:14px;color:#7b818a;text-decoration:none;transition:color .16s,background .16s,transform .16s}
+  .mobile-bottom-nav a:active{transform:scale(.95)}
+  .mobile-bottom-nav a span{height:25px;display:grid;place-items:center}
+  .mobile-bottom-nav a b{font-size:10px;font-weight:800;line-height:1}
+  .mobile-bottom-nav a.active{background:#f0ebfa;color:#674ca0}
+  .mobile-bottom-nav a.active::before{content:"";position:absolute;top:-7px;width:28px;height:3px;border-radius:0 0 4px 4px;background:#765cac}
+
+  .page-header{display:grid!important;grid-template-columns:1fr!important;min-height:auto;height:auto;padding:calc(10px + env(safe-area-inset-top)) 14px 11px!important;gap:9px!important}
+  .hotel-select-wrap{width:100%;display:grid;grid-template-columns:44px minmax(0,1fr);gap:11px}
+  .hotel-picker-content{width:100%}.hotel-picker-content>span{font-size:9px!important}.hotel-picker-trigger{min-height:27px;width:100%}.hotel-picker-trigger b{font-size:17px!important}
+  .page-header .header-tools{width:100%;display:block}.page-header .mode-switch{width:100%;display:grid;grid-template-columns:1fr 1fr;padding:4px;border-radius:12px}.page-header .mode-switch button{width:100%;min-height:39px;font-size:13px!important}
+  .page-header .mode-switch button.active{box-shadow:0 3px 10px rgba(55,46,75,.1)}
+  .title-row{padding-top:14px}.title-row>div:first-child{display:none}.month-control{border-radius:13px;box-shadow:0 3px 12px rgba(40,35,49,.04)}
+
+  .group-topbar{display:grid!important;grid-template-columns:1fr;position:sticky;top:0;z-index:30;padding:calc(10px + env(safe-area-inset-top)) 14px 11px!important;background:rgba(255,255,255,.96);backdrop-filter:blur(18px)}
+  .group-topbar .group-brand{width:100%}.group-topbar .header-tools{width:100%;display:block}.group-topbar .mode-switch{width:100%;display:grid;grid-template-columns:1fr 1fr}
+  .group-topbar .mode-switch button{min-height:39px}
+
+  .alerts-topbar{position:sticky;top:0;z-index:30;min-height:66px;height:auto;padding:calc(10px + env(safe-area-inset-top)) 14px 10px;background:rgba(255,255,255,.96);backdrop-filter:blur(18px)}
+  .alerts-topbar nav{display:none}.alerts-topbar .alerts-brand div{display:grid}.alerts-topbar>button{min-height:40px;border-radius:11px}
+  .alerts-page{padding-right:14px!important;padding-left:14px!important}.alerts-title{align-items:flex-start;flex-direction:column;gap:12px}.alerts-title>button{width:100%;min-height:44px}
+
+  .admin-header{align-items:flex-start;flex-direction:column;gap:13px}.admin-header>button,.admin-header .primary-admin-button{width:100%;min-height:44px}
+
+  .pwa-install{bottom:calc(var(--mobile-app-nav-height) + env(safe-area-inset-bottom) + 10px);z-index:190}
 }

@@ -5,6 +5,7 @@ import "./readability.css";
 import "./mobile-app.css";
 import "./alert-links.css";
 import { AuthProvider } from "./auth-provider";
+import { MobileBottomNav } from "./mobile-bottom-nav";
 import { PwaClient } from "./pwa-client";
 
 const geistSans = Geist({
@@ -54,7 +55,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>{children}<MobileBottomNav /></AuthProvider>
         <PwaClient />
       </body>
     </html>
