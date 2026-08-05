@@ -1,7 +1,2 @@
-import AlertsClient from "../alerts-client";
-import "../alerts.css";
-
-export default function OtaAlertsPage(){
-  return <AlertsClient mode="ota"/>;
-}
-
+import {redirect} from "next/navigation";
+export default function LegacyOtaAlerts(){redirect("/intelligence/ota")}

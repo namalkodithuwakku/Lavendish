@@ -360,6 +360,45 @@ async function createAlert(
   return true;
 }
 
+async function createInventoryAlert(
+  db: SupabaseClient,
+  profile: Profile,
+  previous: Snapshot,
+  current: Snapshot,
+) {
+  const record = {
+    hotel_code: profile.hotel_code,
+    stay_date: current.stay_date,
+    alert_type: "OCCUPANCY",
+    threshold: current.threshold_level,
+    total_rooms: current.total_rooms,
+    rooms_sold: current.rooms_sold,
+    available_rooms: current.available_rooms,
+    occupancy_percent: current.occupancy_percent,
+    previous_rooms_sold: previous.rooms_sold,
+    rooms_change: current.rooms_sold - previous.rooms_sold,
+    previous_available_rooms: previous.available_rooms,
+    previous_occupancy_percent: previous.occupancy_percent,
+    suggested_rates: current.suggested_rates,
+    recommended_rate: null,
+    currency: null,
+    rate_plan_code: null,
+    action: "RECOMMEND",
+    status: "PENDING",
+    payload: {
+      hotelName: profile.hotel_name,
+      stayDate: current.stay_date,
+      recommendation: "Review and adjust channel-manager inventory",
+      previous,
+      current,
+    },
+    updated_at: new Date().toISOString(),
+  };
+  const { data: existing } = await db.from("yield_alerts").select("id").eq("hotel_code",profile.hotel_code).eq("stay_date",current.stay_date).eq("alert_type","OCCUPANCY").in("status",["PENDING","STARTED"]).order("created_at",{ascending:false}).limit(1).maybeSingle();
+  if(existing){const {error}=await db.from("yield_alerts").update(record).eq("id",existing.id);if(error)throw error;return false}
+  const {error}=await db.from("yield_alerts").insert(record);if(error)throw error;return true;
+}
+
 async function runEngine(hotelCode?: string) {
   const db = adminClient();
   const today = new Date();
@@ -514,16 +553,9 @@ async function runEngine(hotelCode?: string) {
               previous.available_rooms <= 0 ||
               current.available_rooms <= 0)
           ) {
-            if (
-              await createAlert(
-                db,
-                profile,
-                settings,
-                previous,
-                current,
-              )
-            )
-              createdAlerts++;
+            if (await createAlert(db,profile,settings,previous,current))createdAlerts++;
+            const fullStateChanged=previous.available_rooms<=0||current.available_rooms<=0;
+            if(!fullStateChanged&&await createInventoryAlert(db,profile,previous,current))createdAlerts++;
           }
         }
 

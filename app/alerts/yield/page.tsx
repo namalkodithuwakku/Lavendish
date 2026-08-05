@@ -1,6 +1,2 @@
-import AlertsClient from "../alerts-client";
-import "../alerts.css";
-
-export default function YieldAlertsPage(){
-  return <AlertsClient mode="yield"/>;
-}
+import {redirect} from "next/navigation";
+export default function LegacyYieldAlerts(){redirect("/intelligence/yield")}

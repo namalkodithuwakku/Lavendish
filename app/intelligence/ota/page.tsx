@@ -1,3 +1,6 @@
-import { IntelligenceShell } from "../intelligence-shell";
-import { ModuleClient } from "../module-client";
-export default function OtaPage(){return <IntelligenceShell eyebrow="CHANNEL MANAGER" title="OTA"><ModuleClient category="OTA"/></IntelligenceShell>}
+import {IntelligenceShell} from "../intelligence-shell";
+import AlertsClient from "../../alerts/alerts-client";
+import "../../alerts/alerts.css";
+import "../alerts-integration.css";
+
+export default function OtaPage(){return <IntelligenceShell eyebrow="CHANNEL MANAGEMENT" title="OTA"><div className="integrated-alerts"><AlertsClient mode="ota"/></div></IntelligenceShell>}
