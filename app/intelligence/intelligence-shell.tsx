@@ -13,7 +13,7 @@ const menu=[
  ...masterNavigation.map((item,index)=>({...item,section:index<4?"PERFORMANCE":"MANAGEMENT"})),
 ];
 
-function isActive(pathname:string,href:string){return href==="/intelligence"?pathname==="/intelligence":href==="/"?pathname==="/":pathname.startsWith(href)}
+function isActive(pathname:string,href:string){if(href==="/settings/intelligence")return pathname.startsWith("/settings/");return href==="/intelligence"?pathname==="/intelligence":href==="/"?pathname==="/":pathname.startsWith(href)}
 
 export function IntelligenceShell({eyebrow,title,actions,children}:{eyebrow:string;title:string;actions?:ReactNode;children:ReactNode}){
   const pathname=usePathname();
