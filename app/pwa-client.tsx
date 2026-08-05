@@ -48,9 +48,9 @@ export function PwaClient() {
   };
 
   return (
-    <div className="pwa-install" role="region" aria-label="Install Lavendish Occupancy">
-      <div className="pwa-install-mark">LH</div>
-      <div><b>Use like an app</b><span>{showIosHelp ? "In Safari, tap Share, then Add to Home Screen." : "Add Lavendish Occupancy to your home screen."}</span></div>
+    <div className="pwa-install" role="region" aria-label="Install NKH Performance Hub">
+      <div className="pwa-install-mark">NKH</div>
+      <div><b>Use like an app</b><span>{showIosHelp ? "In Safari, tap Share, then Add to Home Screen." : "Add NKH Performance Hub to your home screen."}</span></div>
       <button type="button" onClick={install}>{showIosHelp ? "Got it" : "Install"}</button>
       <button type="button" className="pwa-dismiss" aria-label="Dismiss install message" onClick={() => { setInstalled(true); setShowIosHelp(false); }}>×</button>
     </div>

@@ -4,6 +4,8 @@ import "./globals.css";
 import "./readability.css";
 import "./mobile-app.css";
 import "./alert-links.css";
+import "./product-system.css";
+import "./intelligence/mobile-super-app.css";
 import { AuthProvider } from "./auth-provider";
 import { MobileBottomNav } from "./mobile-bottom-nav";
 import { PwaClient } from "./pwa-client";
@@ -19,14 +21,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: "Lavendish Occupancy", template: "%s | Lavendish Occupancy" },
-  applicationName: "Lavendish Occupancy",
-  description: "Live occupancy intelligence for hotel group leadership.",
+  title: { default: "NKH Performance Hub", template: "%s | NKH Performance Hub" },
+  applicationName: "NKH Performance Hub",
+  description: "Hotel performance and revenue operations by N K Hotels.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Lavendish Occupancy",
+    title: "NKH Performance Hub",
   },
   other: {
     "codex-preview": "development",

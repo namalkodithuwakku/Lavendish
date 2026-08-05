@@ -1,7 +1,7 @@
 {
-  "name": "Lavendish Hotels Occupancy Intelligence",
-  "short_name": "Lavendish",
-  "description": "Live hotel occupancy intelligence for Lavendish Hotels management.",
+  "name": "NKH Performance Hub",
+  "short_name": "NKH Hub",
+  "description": "Hotel performance and revenue operations by N K Hotels.",
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",

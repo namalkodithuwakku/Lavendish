@@ -46,12 +46,12 @@
   .page,.group-page,.alerts-page,.admin-page{width:100%!important;margin-left:0!important;padding-bottom:30px}
 
   .mobile-bottom-nav{position:fixed;z-index:200;right:0;bottom:0;left:0;min-height:calc(var(--mobile-app-nav-height) + env(safe-area-inset-bottom));display:flex;align-items:flex-start;justify-content:space-around;padding:7px 7px calc(7px + env(safe-area-inset-bottom));border-top:1px solid #e3e4e8;background:rgba(255,255,255,.96);box-shadow:0 -8px 28px rgba(27,35,43,.1);backdrop-filter:blur(18px)}
-  .mobile-bottom-nav a{position:relative;min-width:58px;min-height:56px;display:grid;align-content:center;justify-items:center;gap:3px;border-radius:14px;color:#7b818a;text-decoration:none;transition:color .16s,background .16s,transform .16s}
-  .mobile-bottom-nav a:active{transform:scale(.95)}
-  .mobile-bottom-nav a span{height:25px;display:grid;place-items:center}
-  .mobile-bottom-nav a b{font-size:10px;font-weight:800;line-height:1}
-  .mobile-bottom-nav a.active{background:#f0ebfa;color:#674ca0}
-  .mobile-bottom-nav a.active::before{content:"";position:absolute;top:-7px;width:28px;height:3px;border-radius:0 0 4px 4px;background:#765cac}
+  .mobile-bottom-nav a,.mobile-bottom-nav button{position:relative;min-width:58px;min-height:56px;display:grid;align-content:center;justify-items:center;gap:3px;border:0;border-radius:14px;color:#7b818a;background:transparent;font:inherit;text-decoration:none;transition:color .16s,background .16s,transform .16s}
+  .mobile-bottom-nav a:active,.mobile-bottom-nav button:active{transform:scale(.95)}
+  .mobile-bottom-nav a span,.mobile-bottom-nav button span{height:25px;display:grid;place-items:center}
+  .mobile-bottom-nav a b,.mobile-bottom-nav button b{font-size:10px;font-weight:800;line-height:1}
+  .mobile-bottom-nav a.active,.mobile-bottom-nav button.active{background:#f0ebfa;color:#674ca0}
+  .mobile-bottom-nav a.active::before,.mobile-bottom-nav button.active::before{content:"";position:absolute;top:-7px;width:28px;height:3px;border-radius:0 0 4px 4px;background:#765cac}
 
   .page-header{display:grid!important;grid-template-columns:1fr!important;min-height:auto;height:auto;padding:calc(10px + env(safe-area-inset-top)) 14px 11px!important;gap:9px!important}
   .hotel-select-wrap{width:100%;display:grid;grid-template-columns:44px minmax(0,1fr);gap:11px}

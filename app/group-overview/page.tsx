@@ -360,7 +360,7 @@ export default function GroupOverviewPage() {
     return (
       <main className="group-access-blocked">
         <section>
-          <span>LH</span>
+          <span>NKH</span>
           <h1>Full portfolio access required</h1>
           <p>Group Overview is available only to users who can view all 10 hotels.</p>
           <Link href="/">Return to hotel dashboard</Link>
@@ -376,14 +376,13 @@ export default function GroupOverviewPage() {
         onMouseLeave={() => { if (window.matchMedia("(hover: hover)").matches) setSidebarOpen(false); }}
       >
         <div className="rail-brand">
-          <div className="logo">LI</div>
-          <div className="rail-brand-copy"><b>Lavendish</b><span>Intelligence</span></div>
+          <div className="logo">NKH</div>
+          <div className="rail-brand-copy"><b>Performance Hub</b><span>N K Hotels</span></div>
         </div>
         <nav aria-label="Main navigation">
           <Link className="rail-nav-link" href="/"><span><NavigationIcon name="hotel"/></span><b>Hotel Occupancy</b></Link>
           <Link className="rail-nav-link active" href="/group-overview"><span><NavigationIcon name="group"/></span><b>Group Occupancy</b></Link>
           {access?.role === "MASTER_ADMIN" && masterNavigation.map(item=><Link className="rail-nav-link" href={item.href} key={item.href}><span><NavigationIcon name={item.icon}/></span><b>{item.label}</b></Link>)}
-          {access?.role === "MASTER_ADMIN" && <Link className="rail-nav-link" href="/admin"><span><NavigationIcon name="admin"/></span><b>Administration</b></Link>}
         </nav>
         <div className="nkh-authority"><span>NKH</span><div><b>System by</b><strong>N K Hotels</strong></div></div>
       </aside>
@@ -392,7 +391,7 @@ export default function GroupOverviewPage() {
         <button className="mobile-menu-toggle" onClick={() => setSidebarOpen((open) => !open)} aria-label="Open navigation menu">☰</button>
         <Link className="group-brand" href="/">
           <span>ALL</span>
-          <div><small>PORTFOLIO VIEW</small><b>Lavendish Leisure Performance</b></div>
+          <div><small>ACTIVE PORTFOLIO</small><b>Lavendish Leisure</b></div>
         </Link>
         <div className="header-tools">
           <div className="mode-switch" aria-label="Display format">

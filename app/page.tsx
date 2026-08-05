@@ -416,14 +416,13 @@ export default function Home() {
         onMouseLeave={() => { if (window.matchMedia("(hover: hover)").matches) setSidebarOpen(false); }}
       >
         <div className="rail-brand">
-          <div className="logo">LI</div>
-          <div className="rail-brand-copy"><b>Lavendish</b><span>Intelligence</span></div>
+          <div className="logo">NKH</div>
+          <div className="rail-brand-copy"><b>Performance Hub</b><span>N K Hotels</span></div>
         </div>
         <nav aria-label="Main navigation">
           <Link className="rail-nav-link active" href="/"><span><NavigationIcon name="hotel"/></span><b>Hotel Occupancy</b></Link>
           {hasFullPortfolioAccess && <Link className="rail-nav-link" href="/group-overview"><span><NavigationIcon name="group"/></span><b>Group Occupancy</b></Link>}
           {access?.role === "MASTER_ADMIN" && masterNavigation.map(item=><Link className="rail-nav-link" href={item.href} key={item.href}><span><NavigationIcon name={item.icon}/></span><b>{item.label}</b></Link>)}
-          {access?.role === "MASTER_ADMIN" && <Link className="rail-nav-link" href="/admin"><span><NavigationIcon name="admin"/></span><b>Administration</b></Link>}
         </nav>
         <div className="nkh-authority"><span>NKH</span><div><b>System by</b><strong>N K Hotels</strong></div></div>
       </aside>
