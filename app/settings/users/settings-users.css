@@ -3,3 +3,4 @@
 .settings-users-page .architecture-note{margin-bottom:0}
 .settings-users-page .admin-toast{bottom:24px}
 .settings-users-page .modal-backdrop{z-index:300}
+.settings-users-page .user-modal{max-height:calc(100vh - 32px);overflow-y:auto}
