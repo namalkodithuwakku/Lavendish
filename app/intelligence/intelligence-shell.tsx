@@ -12,10 +12,10 @@ import "./mobile-super-app.css";
 const menu=[
  {href:"/",label:"Hotel Occupancy",icon:"hotel" as NavigationIconName,section:"OCCUPANCY"},
  {href:"/group-overview",label:"Group Occupancy",icon:"group" as NavigationIconName,section:"OCCUPANCY"},
- ...masterNavigation.map((item,index)=>({...item,section:index<4?"PERFORMANCE":"MANAGEMENT"})),
+ ...masterNavigation.map((item,index)=>({...item,section:index<3?"PERFORMANCE":"MANAGEMENT"})),
 ];
 
-function isActive(pathname:string,href:string){if(href==="/settings/intelligence")return pathname.startsWith("/settings/");return href==="/intelligence"?pathname==="/intelligence":href==="/"?pathname==="/":pathname.startsWith(href)}
+function isActive(pathname:string,href:string){if(href==="/settings/intelligence")return pathname.startsWith("/settings/");return href==="/"?pathname==="/":pathname.startsWith(href)}
 
 export function IntelligenceShell({eyebrow,title,actions,children}:{eyebrow:string;title:string;actions?:ReactNode;children:ReactNode}){
   const pathname=usePathname();
@@ -26,13 +26,13 @@ export function IntelligenceShell({eyebrow,title,actions,children}:{eyebrow:stri
   const menuWithSections=menu.map((item,index)=>({...item,showSection:index===0||menu[index-1].section!==item.section}));
   return <main className="intel-app">
     <aside className="intel-rail">
-      <Link className="intel-brand" href="/intelligence"><span>NKH</span><div><b>Performance Hub</b><small>Hotel Operations Platform</small></div></Link>
+      <Link className="intel-brand" href="/intelligence/ota"><span>NKH</span><div><b>Performance Hub</b><small>Hotel Operations Platform</small></div></Link>
       <nav className="intel-menu" aria-label="Main navigation">{menuWithSections.map(item=><span key={item.href}>{item.showSection&&<small className="intel-menu-label">{item.section}</small>}<Link className={isActive(pathname,item.href)?"active":""} href={item.href} title={item.label}><span><NavigationIcon name={item.icon}/></span><b>{item.label}</b></Link></span>)}</nav>
       <div className="intel-master"><span>NK</span><div><b>Master Control</b><small>All modules enabled</small></div></div>
     </aside>
     <section className="intel-main"><header className="intel-topbar"><div><p>{eyebrow}</p><h1>{title}</h1></div><div>{actions}</div></header>{children}</section>
     {moreOpen&&<button className="mobile-more-backdrop" aria-label="Close more menu" onClick={()=>setMoreOpen(false)}/>} 
-    <section className={`mobile-more-sheet ${moreOpen?"open":""}`} aria-hidden={!moreOpen}><header><div><small>NKH PERFORMANCE HUB</small><h2>More</h2></div><button onClick={()=>setMoreOpen(false)} aria-label="Close more menu">×</button></header><div>{masterNavigation.filter(item=>!["/intelligence/ota","/intelligence/yield"].includes(item.href)).map(item=><Link className={isActive(pathname,item.href)?"active":""} href={item.href} key={item.href} onClick={()=>setMoreOpen(false)}><span><NavigationIcon name={item.icon}/></span><div><b>{item.label}</b><small>{item.href==="/intelligence"?"Portfolio command center":item.href==="/intelligence/marketing"?"Demand opportunities":item.href==="/properties"?"Hotel profiles and sources":item.href==="/reputation"?"Reviews and responses":item.href==="/reports"?"Management reporting":"Users, schedules and access"}</small></div></Link>)}</div></section>
+    <section className={`mobile-more-sheet ${moreOpen?"open":""}`} aria-hidden={!moreOpen}><header><div><small>NKH PERFORMANCE HUB</small><h2>More</h2></div><button onClick={()=>setMoreOpen(false)} aria-label="Close more menu">×</button></header><div>{masterNavigation.filter(item=>!["/intelligence/ota","/intelligence/yield"].includes(item.href)).map(item=><Link className={isActive(pathname,item.href)?"active":""} href={item.href} key={item.href} onClick={()=>setMoreOpen(false)}><span><NavigationIcon name={item.icon}/></span><div><b>{item.label}</b><small>{item.href==="/intelligence/marketing"?"Demand opportunities":item.href==="/properties"?"Hotel profiles and sources":item.href==="/reputation"?"Reviews and responses":item.href==="/reports"?"Management reporting":"Users, schedules and access"}</small></div></Link>)}</div></section>
     <nav className="intel-mobile-nav" aria-label="Mobile app navigation">{menu.filter(item=>["/","/group-overview","/intelligence/ota","/intelligence/yield"].includes(item.href)).map(item=><Link className={isActive(pathname,item.href)?"active":""} href={item.href} key={item.href}><span><NavigationIcon name={item.icon}/></span><b>{item.label.replace(" Occupancy","")}</b></Link>)}<button className={moreOpen||!["/","/group-overview","/intelligence/ota","/intelligence/yield"].some(href=>isActive(pathname,href))?"active":""} onClick={()=>setMoreOpen(open=>!open)}><span><NavigationIcon name="more"/></span><b>More</b></button></nav>
   </main>
 }
