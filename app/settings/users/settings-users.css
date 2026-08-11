@@ -4,3 +4,7 @@
 .settings-users-page .admin-toast{bottom:24px}
 .settings-users-page .modal-backdrop{z-index:300}
 .settings-users-page .user-modal{max-height:calc(100vh - 32px);overflow-y:auto}
+.marketing-access-title{margin-top:24px;padding-top:19px;border-top:1px solid #ebe7f1}
+.marketing-section-grid label{min-height:66px}
+.marketing-section-grid b{font-size:13px}
+.marketing-section-grid small{font-size:11px;line-height:1.35}

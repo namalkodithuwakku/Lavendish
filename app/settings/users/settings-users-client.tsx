@@ -26,8 +26,19 @@ type User = {
   role: Role;
   hotels: string[];
   pages: string[];
+  marketingSections: string[];
   active: boolean;
 };
+
+const MARKETING_SECTION_OPTIONS = [
+  { code: "MARKETING_OVERVIEW", label: "Overview", note: "KPIs and occupancy opportunities" },
+  { code: "MARKETING_CAMPAIGNS", label: "Campaigns", note: "Commercial campaign plans" },
+  { code: "MARKETING_CALENDAR", label: "Content calendar", note: "Scheduled marketing content" },
+  { code: "MARKETING_CREATIVES", label: "Creative library", note: "Prompts, captions and assets" },
+  { code: "MARKETING_PLAYBOOKS", label: "Hotel playbooks", note: "Hotel-specific marketing guidance" },
+  { code: "MARKETING_UPDATE_STATUS", label: "Update workflow status", note: "Designed, approved and published" },
+  { code: "MARKETING_EDIT_PLANS", label: "Edit marketing plans", note: "Change campaigns, content, creatives and playbooks" },
+];
 
 const blank: User = {
   id: "",
@@ -37,6 +48,7 @@ const blank: User = {
   role: "GM",
   hotels: [],
   pages: ["HOTEL_OCCUPANCY"],
+  marketingSections: [],
   active: true,
 };
 
@@ -82,6 +94,7 @@ export function SettingsUsersClient() {
             data.users.map((user: Omit<User, "password">) => ({
               ...user,
               pages: user.pages?.length ? user.pages : ["HOTEL_OCCUPANCY"],
+              marketingSections: user.marketingSections ?? [],
               password: "",
             })),
           );
@@ -121,6 +134,15 @@ export function SettingsUsersClient() {
           }
         : user,
     );
+  }
+
+  function toggleMarketingSection(code: string) {
+    setEditing((user) => user ? {
+      ...user,
+      marketingSections: user.marketingSections.includes(code)
+        ? user.marketingSections.filter((item) => item !== code)
+        : [...user.marketingSections.filter((item) => item !== "ALL"), code],
+    } : user);
   }
 
   async function save(event: FormEvent) {
@@ -164,7 +186,7 @@ export function SettingsUsersClient() {
           className="intel-primary"
           onClick={() => {
             setError("");
-            setEditing({ ...blank, pages: [...blank.pages] });
+            setEditing({ ...blank, pages: [...blank.pages], marketingSections: [] });
           }}
         >
           + Create user
@@ -195,7 +217,7 @@ export function SettingsUsersClient() {
                 <div className="access-summary">{user.hotels.includes("ALL") ? <b>All 10 hotels</b> : <><b>{user.hotels.length} hotels</b><small>{user.hotels.join(" / ") || "No access"}</small></>}</div>
                 <div className="access-summary">{user.pages.includes("ALL") ? <b>All pages</b> : <><b>{user.pages.length} pages</b><small>{user.pages.map((code) => PAGE_OPTIONS.find((page) => page.code === code)?.label ?? code).join(" / ")}</small></>}</div>
                 <span className={`profile-status ${user.active ? "active" : "inactive"}`}>{user.active ? "Active" : "Inactive"}</span>
-                <button className="edit-button" onClick={() => { setError(""); setEditing({ ...user, password: "", hotels: [...user.hotels], pages: [...user.pages] }); }}>Edit</button>
+                <button className="edit-button" onClick={() => { setError(""); setEditing({ ...user, password: "", hotels: [...user.hotels], pages: [...user.pages], marketingSections: [...user.marketingSections] }); }}>Edit</button>
               </div>
             ))}
           </div>
@@ -211,7 +233,7 @@ export function SettingsUsersClient() {
               <label><span>Full name *</span><input required value={editing.name} onChange={(event) => setEditing({ ...editing, name: event.target.value })} /></label>
               <label><span>Email address *</span><input required type="email" value={editing.email} onChange={(event) => setEditing({ ...editing, email: event.target.value })} /></label>
               <label className="wide"><span>{editing.id ? "New password (optional)" : "Initial password *"}</span><input required={!editing.id} minLength={8} type="password" autoComplete="new-password" value={editing.password} onChange={(event) => setEditing({ ...editing, password: event.target.value })} /><small>{editing.id ? "Leave blank to keep the current password." : "Minimum 8 characters."}</small></label>
-              <label><span>Role *</span><select value={editing.role} onChange={(event) => { const role = event.target.value as Role; setEditing({ ...editing, role, pages: role === "MASTER_ADMIN" ? ["ALL"] : editing.pages.includes("ALL") ? ["HOTEL_OCCUPANCY"] : editing.pages }); }}><option value="MASTER_ADMIN">Master Admin</option><option value="HEAD_OFFICE">Head Office</option><option value="GM">General Manager</option><option value="VIEWER">Viewer</option></select></label>
+              <label><span>Role *</span><select value={editing.role} onChange={(event) => { const role = event.target.value as Role; setEditing({ ...editing, role, pages: role === "MASTER_ADMIN" ? ["ALL"] : editing.pages.includes("ALL") ? ["HOTEL_OCCUPANCY"] : editing.pages, marketingSections: role === "MASTER_ADMIN" ? ["ALL"] : editing.marketingSections.includes("ALL") ? [] : editing.marketingSections }); }}><option value="MASTER_ADMIN">Master Admin</option><option value="HEAD_OFFICE">Head Office</option><option value="GM">General Manager</option><option value="VIEWER">Viewer</option></select></label>
               <label><span>Account status</span><select value={editing.active ? "Active" : "Inactive"} onChange={(event) => setEditing({ ...editing, active: event.target.value === "Active" })}><option>Active</option><option>Inactive</option></select></label>
             </div>
 
@@ -221,7 +243,12 @@ export function SettingsUsersClient() {
             <div className="hotel-access-title page-access-title"><div><b>Page access *</b><small>Select the screens this user can see and open.</small></div>{editing.role === "MASTER_ADMIN" ? <span className="master-page-note">All pages required</span> : <button type="button" className={editing.pages.includes("ALL") ? "selected" : ""} onClick={() => setEditing({ ...editing, pages: ["ALL"] })}>All pages</button>}</div>
             <div className="page-check-grid">{PAGE_OPTIONS.map((page) => <label className={editing.pages.includes("ALL") || editing.pages.includes(page.code) ? "selected" : ""} key={page.code}><input type="checkbox" checked={editing.pages.includes("ALL") || editing.pages.includes(page.code)} disabled={editing.pages.includes("ALL") || editing.role === "MASTER_ADMIN"} onChange={() => togglePage(page.code)} /><span><b>{page.label}</b><small>{page.href}</small></span></label>)}</div>
 
-            <div className="modal-actions"><button type="button" disabled={saving} onClick={() => setEditing(null)}>Cancel</button><button className="save-profile" type="submit" disabled={saving || !editing.hotels.length || !editing.pages.length}>{saving ? "Saving securely..." : editing.id ? "Update user" : "Create user and login"}</button></div>
+            {(editing.pages.includes("ALL") || editing.pages.includes("MARKETING")) && <>
+              <div className="hotel-access-title marketing-access-title"><div><b>Marketing section access *</b><small>Choose what this user can view or manage inside Marketing.</small></div>{editing.role === "MASTER_ADMIN" ? <span className="master-page-note">All sections required</span> : <button type="button" className={editing.marketingSections.includes("ALL") ? "selected" : ""} onClick={() => setEditing({ ...editing, marketingSections: ["ALL"] })}>All Marketing sections</button>}</div>
+              <div className="page-check-grid marketing-section-grid">{MARKETING_SECTION_OPTIONS.map((section) => <label className={editing.marketingSections.includes("ALL") || editing.marketingSections.includes(section.code) ? "selected" : ""} key={section.code}><input type="checkbox" checked={editing.marketingSections.includes("ALL") || editing.marketingSections.includes(section.code)} disabled={editing.marketingSections.includes("ALL") || editing.role === "MASTER_ADMIN"} onChange={() => toggleMarketingSection(section.code)} /><span><b>{section.label}</b><small>{section.note}</small></span></label>)}</div>
+            </>}
+
+            <div className="modal-actions"><button type="button" disabled={saving} onClick={() => setEditing(null)}>Cancel</button><button className="save-profile" type="submit" disabled={saving || !editing.hotels.length || !editing.pages.length || ((editing.pages.includes("ALL") || editing.pages.includes("MARKETING")) && !editing.marketingSections.length)}>{saving ? "Saving securely..." : editing.id ? "Update user" : "Create user and login"}</button></div>
           </form>
         </div>
       )}
