@@ -13,8 +13,8 @@ const hotelOptions = [
   { code: "LCR", name: "Lavendish Country Resort" },
   { code: "LLG", name: "Lavendish Lake Giritale" },
   { code: "LHK", name: "Lavendish Hills Kandy" },
-  { code: "TLK", name: "Tamarind Lifestyle - Kataragama" },
-  { code: "LBU", name: "Lavendish Beach Unawatuna" },
+  { code: "LTL", name: "Lavendish Tamarind Lifestyle" },
+  { code: "LBR", name: "Lavendish Beach Resort" },
 ];
 
 type Role = "MASTER_ADMIN" | "HEAD_OFFICE" | "GM" | "VIEWER";

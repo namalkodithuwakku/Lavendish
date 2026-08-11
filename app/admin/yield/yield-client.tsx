@@ -10,7 +10,7 @@ type Band={id:string;sold_from:number;sold_to:number;rate:number;display_order:n
 type Plan={id:string;hotel_code:string;plan_code:string;plan_name:string;currency:string;effective_from:string;effective_to:string|null;active:boolean;review_note:string|null;yield_rate_bands:Band[]};
 type PlanDraft={id?:string;plan_code:string;plan_name:string;currency:string;effective_from:string;effective_to:string;active:boolean;review_note:string};
 type Settings={hotel_code:string;alert_thresholds:number[];enabled_rate_durations:string[];default_rate_duration:string;future_check_days:number;threshold_75_action:string;threshold_90_action:string;threshold_100_action:string};
-const HOTELS=[["MLR","Miridiya Lake Resort"],["GTL","Grand Tamarind Lake"],["LOH","Lavendish Okrin Hotel"],["LWS","Lavendish Wild Safari"],["LWW","Lavendish Wild Wilpattu"],["LCR","Lavendish Country Resort"],["LLG","Lavendish Lake Giritale"],["LHK","Lavendish Hills Kandy"],["TLK","Tamarind Lifestyle - Kataragama"],["LBU","Lavendish Beach Unawatuna"]];
+const HOTELS=[["GTL","Grand Tamarind Lake"],["LTL","Lavendish Tamarind Lifestyle"],["LWS","Lavendish Wild Safari"],["LOH","Lavendish Okrin Hotel"],["LLG","Lavendish Lake Giritale"],["LBR","Lavendish Beach Resort"],["LWW","Lavendish Wild Wilpattu"],["MLR","Miridiya Lake Resort"],["LCR","Lavendish Country Resort"],["LHK","Lavendish Hills Kandy"]];
 const DURATIONS=[["1_DAY","1 day"],["3_DAYS","3 days"],["7_DAYS","7 days"],["1_MONTH","1 month"],["3_MONTHS","3 months"],["6_MONTHS","6 months"]];
 const ACTIONS=[["OFF","Off"],["NOTIFY","Notify"],["RECOMMEND","Recommend action"],["CREATE_TASK","Priority alert"]];
 const today=()=>new Date().toISOString().slice(0,10);

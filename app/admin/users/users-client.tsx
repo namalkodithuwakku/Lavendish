@@ -3,7 +3,7 @@ import Link from "next/link";
 import {FormEvent,useEffect,useState} from "react";
 import {useAuth} from "../../auth-provider";
 import {PAGE_OPTIONS} from "../../page-access";
-const hotelOptions=[{code:"MLR",name:"Miridiya Lake Resort"},{code:"GTL",name:"Grand Tamarind Lake"},{code:"LOH",name:"Lavendish Okrin Hotel"},{code:"LWS",name:"Lavendish Wild Safari"},{code:"LWW",name:"Lavendish Wild Wilpattu"},{code:"LCR",name:"Lavendish Country Resort"},{code:"LLG",name:"Lavendish Lake Giritale"},{code:"LHK",name:"Lavendish Hills Kandy"},{code:"TLK",name:"Tamarind Lifestyle - Kataragama"},{code:"LBU",name:"Lavendish Beach Unawatuna"}];
+const hotelOptions=[{code:"GTL",name:"Grand Tamarind Lake"},{code:"LTL",name:"Lavendish Tamarind Lifestyle"},{code:"LWS",name:"Lavendish Wild Safari"},{code:"LOH",name:"Lavendish Okrin Hotel"},{code:"LLG",name:"Lavendish Lake Giritale"},{code:"LBR",name:"Lavendish Beach Resort"},{code:"LWW",name:"Lavendish Wild Wilpattu"},{code:"MLR",name:"Miridiya Lake Resort"},{code:"LCR",name:"Lavendish Country Resort"},{code:"LHK",name:"Lavendish Hills Kandy"}];
 type Role="MASTER_ADMIN"|"HEAD_OFFICE"|"GM"|"VIEWER";type User={id:string;name:string;email:string;password:string;role:Role;hotels:string[];pages:string[];active:boolean};
 const blank:User={id:"",name:"",email:"",password:"",role:"GM",hotels:[],pages:["HOTEL_OCCUPANCY"],active:true};const roleLabel:Record<Role,string>={MASTER_ADMIN:"Master Admin",HEAD_OFFICE:"Head Office",GM:"General Manager",VIEWER:"Viewer"};
 export default function UsersClient({adminName,adminEmail}:{adminName:string;adminEmail:string}){

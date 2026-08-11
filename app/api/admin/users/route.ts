@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 const SUPABASE_URL="https://otiiioaazkanroyzvlkg.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY="sb_publishable_zMueiaaAsayg8y1fOBazLg_MauoW5hY";
 const ROLES=["MASTER_ADMIN","HEAD_OFFICE","GM","VIEWER"] as const;
-const HOTEL_CODES=["MLR","GTL","LOH","LWS","LWW","LCR","LLG","LHK","TLK","LBU"];
+const HOTEL_CODES=["GTL","LTL","LWS","LOH","LLG","LBR","LWW","MLR","LCR","LHK"];
 const PAGE_CODES=["HOTEL_OCCUPANCY","GROUP_OCCUPANCY","OTA_ALERTS","YIELD_ALERTS","MARKETING","PROPERTIES","REPUTATION","REPORTS","SETTINGS"];
 function adminClient(){const key=process.env.SUPABASE_SECRET_KEY;if(!key)throw new Error("Admin service is not configured");return createClient(SUPABASE_URL,key,{auth:{persistSession:false,autoRefreshToken:false}})}
 async function requireMasterAdmin(request:NextRequest){const authorization=request.headers.get("authorization")??"";const token=authorization.startsWith("Bearer ")?authorization.slice(7):"";if(!token)return {error:NextResponse.json({error:"Authentication required"},{status:401}),user:null};const client=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{global:{headers:{Authorization:`Bearer ${token}`}},auth:{persistSession:false,autoRefreshToken:false}});const {data:{user},error}=await client.auth.getUser(token);if(error||!user)return {error:NextResponse.json({error:"Invalid session"},{status:401}),user:null};const {data:access}=await client.from("occupancy_user_access").select("role,active").eq("user_id",user.id).maybeSingle();if(!access?.active||access.role!=="MASTER_ADMIN")return {error:NextResponse.json({error:"Master Admin access required"},{status:403}),user:null};return {user,error:null}}

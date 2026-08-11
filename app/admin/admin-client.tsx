@@ -16,8 +16,8 @@ const initialProfiles: Profile[] = [
   { code:"LCR", name:"Lavendish Country Resort", location:"Dambulla", rooms:18, sheetUrl:"", yearTab:"2026", status:"Active" },
   { code:"LLG", name:"Lavendish Lake Giritale", location:"Giritale", rooms:42, sheetUrl:"", yearTab:"2026", status:"Active" },
   { code:"LHK", name:"Lavendish Hills Kandy", location:"Kandy", rooms:43, sheetUrl:"", yearTab:"2026", status:"Active" },
-  { code:"TLK", name:"Tamarind Lifestyle - Kataragama", location:"Kataragama", rooms:17, sheetUrl:"", yearTab:"2026", status:"Active" },
-  { code:"LBU", name:"Lavendish Beach Unawatuna", location:"Unawatuna", rooms:40, sheetUrl:"", yearTab:"2026", status:"Active" },
+  { code:"LTL", name:"Lavendish Tamarind Lifestyle", location:"Kataragama", rooms:17, sheetUrl:"", yearTab:"2026", status:"Active" },
+  { code:"LBR", name:"Lavendish Beach Resort", location:"Unawatuna", rooms:40, sheetUrl:"", yearTab:"2026", status:"Active" },
 ];
 const blank: Profile = { code:"", name:"", location:"", rooms:null, sheetUrl:"", yearTab:"2026", status:"Active" };
 
