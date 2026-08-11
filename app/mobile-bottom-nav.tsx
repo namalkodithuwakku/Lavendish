@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { useState } from "react";
 import { useAuth } from "./auth-provider";
 import { masterNavigation, NavigationIcon } from "./navigation-icons";
+import { hasPageAccess, pageCodeForHref } from "./page-access";
 
 type NavItem = { href: string; label: string; icon: ReactNode; active: (path: string) => boolean };
 
@@ -22,22 +23,25 @@ export function MobileBottomNav() {
   if (!session || !access || pathname === "/login" || intelligenceArea) return null;
 
   const fullPortfolio = access.hotel_codes.includes("ALL");
-  const master = access.role === "MASTER_ADMIN";
+  const allowedMasterNavigation=masterNavigation.filter(item=>{const code=pageCodeForHref(item.href);return code&&hasPageAccess(access.page_codes,code)});
   const items: NavItem[] = [
-    { href: "/", label: "Hotel", icon: hotelIcon, active: (path) => path === "/" },
-    ...(fullPortfolio ? [{ href: "/group-overview", label: "Group", icon: groupIcon, active: (path: string) => path.startsWith("/group-overview") }] : []),
-    ...(master ? [
+    ...(hasPageAccess(access.page_codes,"HOTEL_OCCUPANCY") ? [{ href: "/", label: "Hotel", icon: hotelIcon, active: (path:string) => path === "/" }] : []),
+    ...(fullPortfolio&&hasPageAccess(access.page_codes,"GROUP_OCCUPANCY") ? [{ href: "/group-overview", label: "Group", icon: groupIcon, active: (path: string) => path.startsWith("/group-overview") }] : []),
+    ...(hasPageAccess(access.page_codes,"OTA_ALERTS") ? [
       { href: "/intelligence/ota", label: "OTA", icon: <NavigationIcon name="ota"/>, active: (path: string) => path.startsWith("/intelligence/ota") },
+    ] : []),
+    ...(hasPageAccess(access.page_codes,"YIELD_ALERTS") ? [
       { href: "/intelligence/yield", label: "Yield", icon: <NavigationIcon name="yield"/>, active: (path: string) => path.startsWith("/intelligence/yield") },
     ] : []),
   ];
+  const moreAvailable=allowedMasterNavigation.some(item=>!["/intelligence/ota","/intelligence/yield"].includes(item.href));
 
   return <>
-    {master&&moreOpen&&<button className="mobile-more-backdrop" aria-label="Close more menu" onClick={()=>setMoreOpen(false)}/>}
-    {master&&<section className={`mobile-more-sheet ${moreOpen?"open":""}`} aria-hidden={!moreOpen}><header><div><small>NKH PERFORMANCE HUB</small><h2>More</h2></div><button onClick={()=>setMoreOpen(false)} aria-label="Close more menu">×</button></header><div>{masterNavigation.filter(item=>!["/intelligence/ota","/intelligence/yield"].includes(item.href)).map(item=><Link href={item.href} key={item.href} onClick={()=>setMoreOpen(false)}><span><NavigationIcon name={item.icon}/></span><div><b>{item.label}</b><small>{item.href==="/intelligence/marketing"?"Demand opportunities":item.href==="/properties"?"Hotel profiles and sources":item.href==="/reputation"?"Reviews and responses":item.href==="/reports"?"Management reporting":"Users, schedules and access"}</small></div></Link>)}</div></section>}
+    {moreAvailable&&moreOpen&&<button className="mobile-more-backdrop" aria-label="Close more menu" onClick={()=>setMoreOpen(false)}/>}
+    {moreAvailable&&<section className={`mobile-more-sheet ${moreOpen?"open":""}`} aria-hidden={!moreOpen}><header><div><small>NKH PERFORMANCE HUB</small><h2>More</h2></div><button onClick={()=>setMoreOpen(false)} aria-label="Close more menu">×</button></header><div>{allowedMasterNavigation.filter(item=>!["/intelligence/ota","/intelligence/yield"].includes(item.href)).map(item=><Link href={item.href} key={item.href} onClick={()=>setMoreOpen(false)}><span><NavigationIcon name={item.icon}/></span><div><b>{item.label}</b><small>{item.href==="/intelligence/marketing"?"Demand opportunities":item.href==="/properties"?"Hotel profiles and sources":item.href==="/reputation"?"Reviews and responses":item.href==="/reports"?"Management reporting":"Users, schedules and access"}</small></div></Link>)}</div></section>}
     <nav className="mobile-bottom-nav" aria-label="App navigation">
       {items.map((item) => <Link className={item.active(pathname) ? "active" : ""} href={item.href} key={item.href}><span>{item.icon}</span><b>{item.label}</b></Link>)}
-      {master&&<button className={moreOpen?"active":""} onClick={()=>setMoreOpen(open=>!open)}><span><NavigationIcon name="more"/></span><b>More</b></button>}
+      {moreAvailable&&<button className={moreOpen?"active":""} onClick={()=>setMoreOpen(open=>!open)}><span><NavigationIcon name="more"/></span><b>More</b></button>}
     </nav>
   </>;
 }

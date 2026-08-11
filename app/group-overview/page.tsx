@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../auth-provider";
 import { hotels } from "../dashboard-data";
 import { masterNavigation, NavigationIcon } from "../navigation-icons";
+import { hasPageAccess, pageCodeForHref } from "../page-access";
 import "./group-overview.css";
 
 type ViewMode = "numbers" | "percentage";
@@ -380,9 +381,9 @@ export default function GroupOverviewPage() {
           <div className="rail-brand-copy"><b>Performance Hub</b><span>N K Hotels</span></div>
         </div>
         <nav aria-label="Main navigation">
-          <Link className="rail-nav-link" href="/"><span><NavigationIcon name="hotel"/></span><b>Hotel Occupancy</b></Link>
+          {hasPageAccess(access?.page_codes,"HOTEL_OCCUPANCY")&&<Link className="rail-nav-link" href="/"><span><NavigationIcon name="hotel"/></span><b>Hotel Occupancy</b></Link>}
           <Link className="rail-nav-link active" href="/group-overview"><span><NavigationIcon name="group"/></span><b>Group Occupancy</b></Link>
-          {access?.role === "MASTER_ADMIN" && masterNavigation.map(item=><Link className="rail-nav-link" href={item.href} key={item.href}><span><NavigationIcon name={item.icon}/></span><b>{item.label}</b></Link>)}
+          {masterNavigation.filter(item=>{const code=pageCodeForHref(item.href);return code&&hasPageAccess(access?.page_codes,code)}).map(item=><Link className="rail-nav-link" href={item.href} key={item.href}><span><NavigationIcon name={item.icon}/></span><b>{item.label}</b></Link>)}
         </nav>
         <div className="nkh-authority"><span>NKH</span><div><b>System by</b><strong>N K Hotels</strong></div></div>
       </aside>
