@@ -139,11 +139,21 @@ function actionFor(level: number | null, settings: Settings) {
   return "NOTIFY";
 }
 
-function sameRates(
-  previous: SuggestedRate[] | null | undefined,
-  current: SuggestedRate[],
-) {
-  return JSON.stringify(previous ?? []) === JSON.stringify(current);
+function yieldCategorySignature(snapshot: Pick<Snapshot,"threshold_level"|"suggested_rates">) {
+  const rates = (snapshot.suggested_rates ?? [])
+    .map((rate) => ({
+      planCode: String(rate.planCode ?? ""),
+      currency: String(rate.currency ?? ""),
+      rate: Number(rate.rate ?? 0),
+      soldFrom: Number(rate.soldFrom ?? 0),
+      soldTo: Number(rate.soldTo ?? 0),
+    }))
+    .sort((a,b)=>a.planCode.localeCompare(b.planCode));
+  return JSON.stringify({ threshold: snapshot.threshold_level ?? null, rates });
+}
+
+function sameYieldCategory(previous: Snapshot,current: Snapshot) {
+  return yieldCategorySignature(previous) === yieldCategorySignature(current);
 }
 
 function suggestedRates(
@@ -539,23 +549,17 @@ async function runEngine(hotelCode?: string) {
           baselines++;
         } else {
           const changed = previous.rooms_sold !== current.rooms_sold;
-          const thresholdChanged =
-            previous.threshold_level !== current.threshold_level;
-          const ratesChanged = !sameRates(
-            previous.suggested_rates,
-            current.suggested_rates,
-          );
+          const categoryChanged = !sameYieldCategory(previous,current);
+          const fullStateChanged =
+            (previous.available_rooms <= 0) !== (current.available_rooms <= 0);
 
-          if (
-            changed &&
-            (thresholdChanged ||
-              ratesChanged ||
-              previous.available_rooms <= 0 ||
-              current.available_rooms <= 0)
-          ) {
-            if (await createAlert(db,profile,settings,previous,current))createdAlerts++;
-            const fullStateChanged=previous.available_rooms<=0||current.available_rooms<=0;
-            if(!fullStateChanged&&await createInventoryAlert(db,profile,previous,current))createdAlerts++;
+          if (changed) {
+            if (fullStateChanged) {
+              if (await createAlert(db,profile,settings,previous,current))createdAlerts++;
+            } else {
+              if (categoryChanged&&await createAlert(db,profile,settings,previous,current))createdAlerts++;
+              if (await createInventoryAlert(db,profile,previous,current))createdAlerts++;
+            }
           }
         }
 
