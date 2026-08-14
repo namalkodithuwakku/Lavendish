@@ -263,7 +263,33 @@ async function readMonth(profile: Profile, year: number, month: number) {
   return data;
 }
 
-async function upsertSnapshot(
+async function upsertDetectionSnapshot(
+  db: SupabaseClient,
+  snapshot: Snapshot,
+  sourceUpdatedAt: string,
+) {
+  const { error } = await db
+    .from("yield_detection_snapshots")
+    .upsert(
+      {
+        hotel_code: snapshot.hotel_code,
+        stay_date: snapshot.stay_date,
+        total_rooms: snapshot.total_rooms,
+        rooms_sold: snapshot.rooms_sold,
+        available_rooms: snapshot.available_rooms,
+        occupancy_percent: snapshot.occupancy_percent,
+        threshold_level: snapshot.threshold_level,
+        suggested_rates: snapshot.suggested_rates,
+        source_updated_at: sourceUpdatedAt,
+        last_checked_at: new Date().toISOString(),
+      },
+      { onConflict: "hotel_code,stay_date" },
+    );
+
+  if (error) throw error;
+}
+
+async function upsertDashboardSnapshot(
   db: SupabaseClient,
   snapshot: Snapshot,
   sourceUpdatedAt: string,
@@ -503,7 +529,7 @@ async function runEngine(hotelCode?: string) {
       const dates = monthDates.map((item) => isoDate(item.date));
       const { data: previousRows, error } = dates.length
         ? await db
-            .from("yield_occupancy_snapshots")
+            .from("yield_detection_snapshots")
             .select("*")
             .eq("hotel_code", profile.hotel_code)
             .in("stay_date", dates)
@@ -563,13 +589,14 @@ async function runEngine(hotelCode?: string) {
           }
         }
 
-        await upsertSnapshot(
-          db,
-          current,
-          `${sheet.lastUpdatedDate ?? ""} ${
-            sheet.lastUpdatedTime ?? ""
-          }`.trim(),
-        );
+        const sourceUpdatedAt = `${sheet.lastUpdatedDate ?? ""} ${
+          sheet.lastUpdatedTime ?? ""
+        }`.trim();
+
+        await Promise.all([
+          upsertDetectionSnapshot(db, current, sourceUpdatedAt),
+          upsertDashboardSnapshot(db, current, sourceUpdatedAt),
+        ]);
         updatedSnapshots++;
       }
     } catch (error) {
