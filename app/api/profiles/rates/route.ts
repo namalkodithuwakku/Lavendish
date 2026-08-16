@@ -59,7 +59,7 @@ export async function POST(request:NextRequest){
   const {data:savedProfile,error:profileReadError}=await db.from("property_profiles").select("id,profile_data").eq("property_id",property.id).maybeSingle();if(profileReadError)throw profileReadError;
   const savedData=savedProfile?.profile_data&&typeof savedProfile.profile_data==="object"?savedProfile.profile_data as Record<string,unknown>:{},profilePayload:Record<string,unknown>={property_id:property.id,profile_data:{...savedData,competitorRateAnalysis:analysis},updated_by:user.id,updated_at:new Date().toISOString()};if(savedProfile?.id)profilePayload.id=savedProfile.id;
   const {error:profileSaveError}=await db.from("property_profiles").upsert(profilePayload,{onConflict:"property_id"});if(profileSaveError)throw profileSaveError;
-  await db.from("intelligence_runs").insert({module:"YIELD",run_type:"MANUAL",status:"COMPLETED",requested_by:user.id,started_at:new Date().toISOString(),completed_at:new Date().toISOString(),result_summary:{propertyId:property.id,checkIn:criteria.checkIn,checkOut:criteria.checkOut,competitorCount:competitors.length,verifiedRateCount:verified.length,fallbackCount,advisoryOnly:true}});
+  await db.from("intelligence_runs").insert({module:"YIELD",run_type:"MANUAL",status:"COMPLETED",requested_by:user.id,started_at:new Date().toISOString(),completed_at:new Date().toISOString(),result_summary:{propertyId:property.id,checkIn:criteria.checkIn,checkOut:criteria.checkOut,competitorCount:competitors.length,verifiedRateCount:verifiedCount,fallbackCount,advisoryOnly:true}});
   return NextResponse.json({ok:true,analysis});
  }catch(error){return NextResponse.json({error:error instanceof Error?error.message:"Could not complete rate comparison"},{status:500})}
 }
