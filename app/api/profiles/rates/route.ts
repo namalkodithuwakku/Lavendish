@@ -15,9 +15,9 @@ function outputText(response:{output?:Array<{content?:Array<{type?:string;text?:
 function parseJson(text:string){return JSON.parse(text.replace(/^```json\s*/i,"").replace(/\s*```$/i,"").trim()) as Record<string,unknown>}
 
 export async function POST(request:NextRequest){
- const user=await requireMaster(request);if(!user)return NextResponse.json({error:"Master Admin access required"},{status:403});
  try{
-  const apiKey=process.env.OPENAI_API_KEY;if(!apiKey)throw new Error("OPENAI_API_KEY is not configured in Vercel");
+  const user=await requireMaster(request);if(!user)return NextResponse.json({error:"Master Admin access required"},{status:403});
+  const apiKey=process.env.OPENAI_API_KEY??process.env.OPENAI_API_TOKEN;if(!apiKey)throw new Error("OPENAI_API_KEY is not configured in Vercel");
   const body=await request.json() as {propertyId?:string;criteria?:Criteria;competitors?:Competitor[]};
   if(!body.propertyId||!body.criteria?.checkIn||!body.criteria?.checkOut)return NextResponse.json({error:"Hotel and stay dates are required"},{status:400});
   const competitors=(body.competitors??[]).filter(item=>item.active&&item.name.trim()).slice(0,7);if(!competitors.length)return NextResponse.json({error:"Add at least one active competitor"},{status:400});
