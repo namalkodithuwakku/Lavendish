@@ -33,9 +33,10 @@ Requested room comparison: ${criteria.roomType}
 Requested meal plan: ${criteria.mealPlan}
 Cancellation preference: ${criteria.cancellation}
 Currency: ${criteria.currency}
+Preferred rate channel: ${criteria.source||"Booking.com"}
 Dates to check in this exact order: ${dates.map(item=>`${item.checkIn} to ${item.checkOut}`).join(", ")}
 
-Search the requested date first. If unavailable or no verifiable price is visible, search the next date, continuing up to the eighth listed arrival date. Stop at the first rate whose hotel, dates and guest details can be tied to a public source. Search this hotel independently; do not discuss or return other hotels. Never invent or convert a price. A visible Google Hotels or OTA search-result price is acceptable when the stay details match. Return a result even when every search fails.
+Search ${criteria.source||"Booking.com"} first for every date. Use Google Hotels, the official site or another major OTA only when the preferred channel has no visible verifiable rate, and clearly name the source used. Search the requested date first. If unavailable or no verifiable price is visible, search the next date, continuing up to the eighth listed arrival date. Stop at the first rate whose hotel, dates and guest details can be tied to a public source. Search this hotel independently; do not discuss or return other hotels. Never invent or convert a price. A visible Google Hotels or OTA search-result price is acceptable when the stay details match. Return a result even when every search fails.
 
 Return ONLY valid JSON:
 {"hotel":"exact supplied hotel","status":"AVAILABLE|FALLBACK_DATE|UNAVAILABLE|NOT_VERIFIED","rate":number|null,"currency":"${criteria.currency}","availableCheckIn":"YYYY-MM-DD or blank","availableCheckOut":"YYYY-MM-DD or blank","daysShifted":0,"datesChecked":"first to last date checked","room":"room or blank","mealPlan":"plan or blank","cancellation":"terms or blank","taxes":"included|excluded|unknown","source":"Google Hotels, OTA or official site","sourceUrl":"direct result URL or blank","note":"short evidence or failure reason"}
