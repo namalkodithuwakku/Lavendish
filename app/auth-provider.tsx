@@ -21,7 +21,7 @@ export function AuthProvider({children}:{children:React.ReactNode}){
  if(!session&&pathname!=="/login")return null;
  if(session&&(!access||!access.active)&&pathname!=="/login")return <main className="access-blocked"><div><span>NK</span><h1>Access is not active</h1><p>Your login is valid, but no active hotel access has been assigned. Please contact the Master Admin.</p><button onClick={signOut}>Sign out</button></div></main>;
  const requiredPage=pageCodeForPath(pathname);
- if(session&&access&&requiredPage&&!hasPageAccess(access.page_codes,requiredPage)&&!pathname.startsWith("/admin/users"))return <main className="access-blocked"><div><span>NK</span><h1>Page access not assigned</h1><p>Your account does not have permission to view this page. Please contact the Master Admin.</p><button onClick={()=>router.replace(firstAllowedPage(access.page_codes))}>Open my dashboard</button></div></main>;
+ if(session&&access&&((requiredPage==="PROPERTIES"&&access.role!=="MASTER_ADMIN")||(requiredPage&&!hasPageAccess(access.page_codes,requiredPage)))&&!pathname.startsWith("/admin/users"))return <main className="access-blocked"><div><span>NK</span><h1>Page access not assigned</h1><p>Your account does not have permission to view this page. Please contact the Master Admin.</p><button onClick={()=>router.replace(firstAllowedPage(access.page_codes))}>Open my dashboard</button></div></main>;
  return <AuthContext.Provider value={{session,access,loading,signOut}}>{children}</AuthContext.Provider>;
 }
 export function useAuth(){return useContext(AuthContext)}
