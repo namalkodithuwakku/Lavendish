@@ -1,3 +1,5 @@
 import { IntelligenceShell } from "../intelligence/intelligence-shell";
 import { PropertiesClient } from "./properties-client";
-export default function PropertiesPage(){return <IntelligenceShell eyebrow="AI HOTEL PROFILES" title="Properties"><PropertiesClient/></IntelligenceShell>}
+import "./properties.css";
+import "./competitors.css";
+export default function PropertiesPage(){return <IntelligenceShell eyebrow="PROPERTY INTELLIGENCE" title="Hotel Profiles"><PropertiesClient/></IntelligenceShell>}
