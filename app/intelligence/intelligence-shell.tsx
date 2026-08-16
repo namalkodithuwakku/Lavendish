@@ -23,9 +23,9 @@ export function IntelligenceShell({eyebrow,title,actions,children}:{eyebrow:stri
   const {access,session}=useAuth();
   const [moreOpen,setMoreOpen]=useState(false);
   if(!session||!access)return <main className="intel-access"><section><span>NK</span><h1>Checking secure access</h1><p>Please wait while your access is confirmed.</p></section></main>;
-  const allowedMenu=menu.filter(item=>{const code=pageCodeForHref(item.href);return code&&hasPageAccess(access.page_codes,code)});
+  const allowedMenu=menu.filter(item=>{if(item.href==="/properties"&&access.role!=="MASTER_ADMIN")return false;const code=pageCodeForHref(item.href);return code&&hasPageAccess(access.page_codes,code)});
   const menuWithSections=allowedMenu.map((item,index)=>({...item,showSection:index===0||allowedMenu[index-1].section!==item.section}));
-  const allowedMore=masterNavigation.filter(item=>{const code=pageCodeForHref(item.href);return code&&hasPageAccess(access.page_codes,code)&&!["/intelligence/ota","/intelligence/yield"].includes(item.href)});
+  const allowedMore=masterNavigation.filter(item=>{if(item.href==="/properties"&&access.role!=="MASTER_ADMIN")return false;const code=pageCodeForHref(item.href);return code&&hasPageAccess(access.page_codes,code)&&!["/intelligence/ota","/intelligence/yield"].includes(item.href)});
   return <main className="intel-app">
     <aside className="intel-rail">
       <Link className="intel-brand" href={firstAllowedPage(access.page_codes)}><span>NKH</span><div><b>Performance Hub</b><small>Hotel Operations Platform</small></div></Link>
