@@ -25,18 +25,14 @@ async function searchCompetitor(apiKey:string,model:string,competitor:Competitor
 
 Hotel: ${competitor.name}
 Starting source: ${competitor.url||"Search Google Hotels, the official hotel site, Booking.com, Agoda and Expedia"}
-Rooms: ${criteria.rooms}
-Adults: ${criteria.adults}
-Children: ${criteria.children}
-Child ages: ${criteria.childAges||"none"}
-Requested room comparison: ${criteria.roomType}
+Rate basis: the lowest publicly bookable nightly rate for exactly 1 room and 2 adults, with no children. Room category does not need to match; accept whichever room category has the lowest available double-occupancy price. Do not use single-occupancy, family, triple, suite-only, package-total or per-person prices.
 Requested meal plan: ${criteria.mealPlan}
 Cancellation preference: ${criteria.cancellation}
 Currency: ${criteria.currency}
 Preferred rate channel: ${criteria.source||"Booking.com"}
 Dates to check in this exact order: ${dates.map(item=>`${item.checkIn} to ${item.checkOut}`).join(", ")}
 
-Search ${criteria.source||"Booking.com"} first for every date. Use Google Hotels, the official site or another major OTA only when the preferred channel has no visible verifiable rate, and clearly name the source used. Search the requested date first. If unavailable or no verifiable price is visible, search the next date, continuing up to the eighth listed arrival date. Stop at the first rate whose hotel, dates and guest details can be tied to a public source. Search this hotel independently; do not discuss or return other hotels. Never invent or convert a price. A visible Google Hotels or OTA search-result price is acceptable ONLY when the public evidence ties it to the same check-in, check-out, room count and guest count. If a price is visible but its dates or guest details cannot be verified, set rate:null, leave availableCheckIn and availableCheckOut blank, and use NOT_VERIFIED. Never place an indicative, from-price, cached snippet price or unrelated-date price in the rate field. Return a result even when every search fails.
+Search ${criteria.source||"Booking.com"} first for every date. Use Google Hotels, the official site or another major OTA only when the preferred channel has no visible verifiable rate, and clearly name the source used. Search the requested date first. If unavailable or no verifiable price is visible, search the next date, continuing up to the eighth listed arrival date. Stop at the first rate whose hotel, dates and guest details can be tied to a public source. Search this hotel independently; do not discuss or return other hotels. Never invent or convert a price. A visible Google Hotels or OTA search-result price is acceptable ONLY when the public evidence ties it to the same check-in, check-out, one-room and two-adult occupancy. If a price is visible but its dates or guest details cannot be verified, set rate:null, leave availableCheckIn and availableCheckOut blank, and use NOT_VERIFIED. Never place an indicative, from-price, cached snippet price or unrelated-date price in the rate field. Return a result even when every search fails.
 
 Return ONLY valid JSON:
 {"hotel":"exact supplied hotel","status":"AVAILABLE|FALLBACK_DATE|UNAVAILABLE|NOT_VERIFIED","rate":number|null,"currency":"${criteria.currency}","availableCheckIn":"YYYY-MM-DD or blank","availableCheckOut":"YYYY-MM-DD or blank","daysShifted":0,"datesChecked":"first to last date checked","room":"room or blank","mealPlan":"plan or blank","cancellation":"terms or blank","taxes":"included|excluded|unknown","source":"Google Hotels, OTA or official site","sourceUrl":"direct result URL or blank","note":"short evidence or failure reason"}
@@ -57,7 +53,7 @@ export async function POST(request:NextRequest){
   const body=await request.json() as {propertyId?:string;criteria?:Criteria;competitors?:Competitor[]};
   if(!body.propertyId||!body.criteria?.checkIn||!body.criteria?.checkOut)return NextResponse.json({error:"Hotel and stay dates are required"},{status:400});
   const competitors=(body.competitors??[]).filter(item=>item.active&&item.name.trim()).slice(0,7);if(!competitors.length)return NextResponse.json({error:"Add at least one active competitor"},{status:400});
-  const criteria=body.criteria,db=adminClient();const {data:property,error}=await db.from("properties").select("id,name,location,legacy_hotel_code").eq("id",body.propertyId).single();if(error||!property)throw error??new Error("Property not found");
+  const criteria={...body.criteria,rooms:"1",adults:"2",children:"0",childAges:"",roomType:"Lowest available double occupancy"},db=adminClient();const {data:property,error}=await db.from("properties").select("id,name,location,legacy_hotel_code").eq("id",body.propertyId).single();if(error||!property)throw error??new Error("Property not found");
   const {data:snapshot}=property.legacy_hotel_code?await db.from("yield_occupancy_snapshots").select("rooms_sold,total_rooms,occupancy_percent,last_checked_at").eq("hotel_code",property.legacy_hotel_code).eq("stay_date",criteria.checkIn).maybeSingle():{data:null};
   const model=process.env.OPENAI_RATE_MODEL||"gpt-5.4-mini";
   const results:RateResult[]=[];for(const competitor of competitors)results.push(await searchCompetitor(apiKey,model,competitor,criteria));
