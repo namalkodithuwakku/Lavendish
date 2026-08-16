@@ -1,8 +1,8 @@
 {
   "crons": [
-    {
-      "path": "/api/yield/check",
-      "schedule": "30 0 * * *"
-    }
+    { "path": "/api/yield/check", "schedule": "30 0 * * *" },
+    { "path": "/api/comp-set/check", "schedule": "30 0 * * *" },
+    { "path": "/api/comp-set/check", "schedule": "30 5 * * *" },
+    { "path": "/api/comp-set/check", "schedule": "30 9 * * *" }
   ]
 }
