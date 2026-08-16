@@ -26,14 +26,17 @@ type SerpResponse={error?:string;properties?:SerpProperty[]};
 async function searchCompetitor(apiKey:string,competitor:Competitor,criteria:Criteria,searchArea:string):Promise<RateResult>{
  const nights=stayLength(criteria.checkIn,criteria.checkOut),attemptErrors:string[]=[];
  for(let days=0;days<=7;days++){
-  const checkIn=addDays(criteria.checkIn,days),checkOut=addDays(checkIn,nights),params=new URLSearchParams({engine:"google_hotels",q:`${searchArea||"Sri Lanka"} hotels`,check_in_date:checkIn,check_out_date:checkOut,adults:"2",children:"0",currency:criteria.currency,gl:"lk",hl:"en",api_key:apiKey});
-  const publicLink=safeGoogleTravelLink(competitor.name,checkIn,checkOut,criteria.currency);
+  const checkIn=addDays(criteria.checkIn,days),checkOut=addDays(checkIn,nights),publicLink=safeGoogleTravelLink(competitor.name,checkIn,checkOut,criteria.currency),queries=[`${searchArea||"Sri Lanka"} hotels`,`${competitor.name} Sri Lanka hotel`];
   try{
-   const response=await fetch(`https://serpapi.com/search.json?${params.toString()}`,{cache:"no-store"});
-   const payload=await response.json() as SerpResponse;
-   if(!response.ok||payload.error){attemptErrors.push(`${checkIn}: ${payload.error||`HTTP ${response.status}`}`);if(response.status===401||response.status===403||response.status===429)break;continue}
-   const candidates=(payload.properties??[]).map(property=>({property,score:nameScore(competitor.name,property.name??"")})).filter(item=>item.score>=.55).sort((a,b)=>b.score-a.score);
-   const property=candidates[0]?.property;if(!property){attemptErrors.push(`${checkIn}: hotel not matched in Google Hotels results`);continue}
+   let property:SerpProperty|undefined,fatal=false;
+   for(const query of queries){
+    const params=new URLSearchParams({engine:"google_hotels",q:query,check_in_date:checkIn,check_out_date:checkOut,adults:"2",children:"0",currency:criteria.currency,gl:"lk",hl:"en",api_key:apiKey}),response=await fetch(`https://serpapi.com/search.json?${params.toString()}`,{cache:"no-store"}),payload=await response.json() as SerpResponse;
+    if(!response.ok||payload.error){attemptErrors.push(`${checkIn}: ${payload.error||`HTTP ${response.status}`}`);fatal=response.status===401||response.status===403||response.status===429;if(fatal)break;continue}
+    const candidates=(payload.properties??[]).map(item=>({property:item,score:nameScore(competitor.name,item.name??"")})).filter(item=>item.score>=.55).sort((a,b)=>b.score-a.score);
+    property=candidates[0]?.property;if(property)break;
+   }
+   if(fatal)break;
+   if(!property){attemptErrors.push(`${checkIn}: hotel not matched in destination or exact-name results`);continue}
    const offers=property.prices??[],booking=offers.find(offer=>(offer.source??"").toLowerCase().includes("booking.com")),lowestOffer=offers.filter(offer=>Number.isFinite(offer.rate_per_night?.extracted_lowest)).sort((a,b)=>(a.rate_per_night?.extracted_lowest??Infinity)-(b.rate_per_night?.extracted_lowest??Infinity))[0],selected=booking?.rate_per_night?.extracted_lowest!=null?booking:lowestOffer,rate=selected?.rate_per_night?.extracted_lowest??property.rate_per_night?.extracted_lowest;
    if(rate==null||!Number.isFinite(rate)){attemptErrors.push(`${checkIn}: property found but no nightly rate returned`);continue}
    const source=selected?.source||"Google Hotels",sourceUrl=selected?.link&&!selected.link.includes("api_key=")?selected.link:publicLink;
