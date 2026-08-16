@@ -58,7 +58,7 @@ export async function POST(request:NextRequest){
   const competitors=(body.competitors??[]).filter(item=>item.active&&item.name.trim()).slice(0,7);if(!competitors.length)return NextResponse.json({error:"Add at least one active competitor"},{status:400});
   const criteria=body.criteria,db=adminClient();const {data:property,error}=await db.from("properties").select("id,name,location,legacy_hotel_code").eq("id",body.propertyId).single();if(error||!property)throw error??new Error("Property not found");
   const {data:snapshot}=property.legacy_hotel_code?await db.from("yield_occupancy_snapshots").select("rooms_sold,total_rooms,occupancy_percent,last_checked_at").eq("hotel_code",property.legacy_hotel_code).eq("stay_date",criteria.checkIn).maybeSingle():{data:null};
-  const model=process.env.OPENAI_RATE_MODEL||process.env.OPENAI_PROFILE_MODEL||"gpt-5.4-mini";
+  const model=process.env.OPENAI_RATE_MODEL||"gpt-5.4-mini";
   const results=await Promise.all(competitors.map(competitor=>searchCompetitor(apiKey,model,competitor,criteria)));
   const verified=results.filter(result=>result.rate!=null).map(result=>result.rate as number).sort((a,b)=>a-b),median=verified.length?verified[Math.floor(verified.length/2)]:null,occupancy=Number(snapshot?.occupancy_percent??0),factor=occupancy>=80?1.05:occupancy>0&&occupancy<=35?.95:1,suggestedRate=median==null?null:Math.round(median*factor);
   const fallbackCount=results.filter(result=>result.status==="FALLBACK_DATE").length,failedCount=results.filter(result=>result.rate==null).length;
