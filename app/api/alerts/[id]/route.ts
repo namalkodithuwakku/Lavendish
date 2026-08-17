@@ -35,8 +35,7 @@ export async function PATCH(request:NextRequest,{params}:{params:Promise<{id:str
   const requiredPage=alert.alert_type==="RATE_UPDATE"?"YIELD_ALERTS":"OTA_ALERTS";
   if(!pageCodes.includes("ALL")&&!pageCodes.includes(requiredPage))return NextResponse.json({error:"Page access denied"},{status:403});
   const now=new Date().toISOString();
-  const workflow=status==="STARTED"?{followed_by:user.id,followed_at:now}:status==="COMPLETED"?{actioned_by:user.id,actioned_at:now}:status==="DISMISSED"?{dismissed_by:user.id,dismissed_at:now}:{};
-  const {data,error}=await admin.from("yield_alerts").update({status,...workflow,updated_at:now}).eq("id",id).select("id,status,updated_at").single();
+  const {data,error}=await admin.from("yield_alerts").update({status,updated_at:now}).eq("id",id).select("id,status,updated_at").single();
   if(error)return NextResponse.json({error:error.message},{status:400});
   return NextResponse.json({success:true,alert:data});
 }
