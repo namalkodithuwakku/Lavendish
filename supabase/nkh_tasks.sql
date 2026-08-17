@@ -1,3 +1,6 @@
+alter table public.occupancy_user_access drop constraint if exists occupancy_user_access_role_check;
+alter table public.occupancy_user_access add constraint occupancy_user_access_role_check check (role in ('MASTER_ADMIN','HEAD_OFFICE','GM','NKH_STAFF','VIEWER'));
+
 create extension if not exists pgcrypto;
 
 create table if not exists public.nkh_tasks (
