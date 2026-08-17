@@ -6,7 +6,7 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { supabase } from "./supabase";
 import { firstAllowedPage, hasPageAccess, pageCodeForPath } from "./page-access";
 
-type Access = { role:"MASTER_ADMIN"|"HEAD_OFFICE"|"GM"|"VIEWER"; hotel_codes:string[]; page_codes:string[]; marketing_section_codes:string[]; active:boolean };
+type Access = { role:"MASTER_ADMIN"|"HEAD_OFFICE"|"GM"|"NKH_STAFF"|"VIEWER"; hotel_codes:string[]; page_codes:string[]; marketing_section_codes:string[]; active:boolean };
 type AuthState = { session:Session|null; access:Access|null; loading:boolean; signOut:()=>Promise<void> };
 const AuthContext=createContext<AuthState>({session:null,access:null,loading:true,signOut:async()=>{}});
 
