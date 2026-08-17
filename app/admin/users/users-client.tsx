@@ -4,8 +4,8 @@ import {FormEvent,useEffect,useState} from "react";
 import {useAuth} from "../../auth-provider";
 import {PAGE_OPTIONS} from "../../page-access";
 const hotelOptions=[{code:"GTL",name:"Grand Tamarind Lake"},{code:"LTL",name:"Lavendish Tamarind Lifestyle"},{code:"LWS",name:"Lavendish Wild Safari"},{code:"LOH",name:"Lavendish Okrin Hotel"},{code:"LLG",name:"Lavendish Lake Giritale"},{code:"LBR",name:"Lavendish Beach Resort"},{code:"LWW",name:"Lavendish Wild Wilpattu"},{code:"MLR",name:"Miridiya Lake Resort"},{code:"LCR",name:"Lavendish Country Resort"},{code:"LHK",name:"Lavendish Hills Kandy"}];
-type Role="MASTER_ADMIN"|"HEAD_OFFICE"|"GM"|"NKH_STAFF"|"VIEWER";type User={id:string;name:string;email:string;password:string;role:Role;hotels:string[];pages:string[];active:boolean};
-const blank:User={id:"",name:"",email:"",password:"",role:"GM",hotels:[],pages:["HOTEL_OCCUPANCY"],active:true};const roleLabel:Record<Role,string>={MASTER_ADMIN:"Master Admin",HEAD_OFFICE:"Head Office",GM:"General Manager",NKH_STAFF:"NKH Staff",VIEWER:"Viewer"};
+type Role="MASTER_ADMIN"|"HEAD_OFFICE"|"GM"|"NKH_STAFF"|"VIEWER";type User={id:string;name:string;email:string;password:string;role:Role;hotels:string[];pages:string[];marketingSections:string[];active:boolean};
+const blank:User={id:"",name:"",email:"",password:"",role:"GM",hotels:[],pages:["HOTEL_OCCUPANCY"],marketingSections:[],active:true};const roleLabel:Record<Role,string>={MASTER_ADMIN:"Master Admin",HEAD_OFFICE:"Head Office",GM:"General Manager",NKH_STAFF:"NKH Staff",VIEWER:"Viewer"};
 export default function UsersClient({adminName,adminEmail}:{adminName:string;adminEmail:string}){
  const {access,session}=useAuth();adminEmail=session?.user.email??adminEmail;adminName=String(session?.user.user_metadata?.full_name??adminName);
  const [users,setUsers]=useState<User[]>([]),[editing,setEditing]=useState<User|null>(null),[notice,setNotice]=useState(""),[error,setError]=useState(""),[loading,setLoading]=useState(true),[saving,setSaving]=useState(false);const initials=adminName.split(" ").map(x=>x[0]).join("").slice(0,2);
