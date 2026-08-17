@@ -4,6 +4,7 @@ export const PAGE_OPTIONS = [
   { code: "OTA_ALERTS", label: "OTA Alerts", href: "/intelligence/ota" },
   { code: "YIELD_ALERTS", label: "Yield Alerts", href: "/intelligence/yield" },
   { code: "COMP_SET", label: "Comp Set", href: "/intelligence/comp-set" },
+  { code: "TASKS", label: "Tasks", href: "/tasks" },
   { code: "MARKETING", label: "Marketing", href: "/intelligence/marketing" },
   { code: "PROPERTIES", label: "Properties", href: "/properties" },
   { code: "REPUTATION", label: "Reputation", href: "/reputation" },
@@ -23,6 +24,7 @@ export function pageCodeForPath(pathname:string):PageCode|null{
   if(pathname.startsWith("/intelligence/ota")||pathname.startsWith("/alerts/ota"))return "OTA_ALERTS";
   if(pathname.startsWith("/intelligence/yield")||pathname.startsWith("/alerts/yield")||pathname.startsWith("/admin/yield"))return "YIELD_ALERTS";
   if(pathname.startsWith("/intelligence/comp-set"))return "COMP_SET";
+  if(pathname.startsWith("/tasks"))return "TASKS";
   if(pathname.startsWith("/intelligence/marketing"))return "MARKETING";
   if(pathname.startsWith("/properties")||pathname==="/admin")return "PROPERTIES";
   if(pathname.startsWith("/reputation"))return "REPUTATION";
