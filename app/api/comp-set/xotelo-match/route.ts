@@ -53,7 +53,7 @@ function matchScore(expected: string, candidate: XoteloHotel, location: string) 
 
 async function findHotel(name: string, location: string, apiKey: string, host: string) {
   const query = [name, location, "Sri Lanka"].filter(Boolean).join(" ");
-  const response = await fetch(`https://${host}/search?${new URLSearchParams({ query })}`, {
+  const response = await fetch(`https://${host}/api/search?${new URLSearchParams({ query })}`, {
     headers: { "X-RapidAPI-Key": apiKey, "X-RapidAPI-Host": host }, cache: "no-store",
   });
   const payload = await response.json() as { error?: { message?: string } | string; result?: { list?: XoteloHotel[] } };
