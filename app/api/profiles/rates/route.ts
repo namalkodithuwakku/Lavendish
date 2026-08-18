@@ -17,7 +17,7 @@ function stayLength(checkIn:string,checkOut:string){return Math.max(1,Math.round
 function emptyResult(hotel:string,criteria:Criteria,note:string,sourceUrl=""):RateResult{return {hotel,status:"NOT_VERIFIED",rate:null,currency:criteria.currency,requestedCheckIn:criteria.checkIn,availableCheckIn:"",availableCheckOut:"",daysShifted:0,datesChecked:`${criteria.checkIn} to ${addDays(criteria.checkIn,7)}`,room:"Lowest available double-occupancy room",mealPlan:"",cancellation:"",taxes:"unknown",source:"Google Hotels via SerpApi",sourceUrl,note}}
 function cleanName(value:string){return value.toLowerCase().replace(/&/g,"and").replace(/[^a-z0-9]+/g," ").trim()}
 function nameScore(expected:string,actual:string){const left=cleanName(expected),right=cleanName(actual);if(left===right)return 1;if(left.includes(right)||right.includes(left))return .9;const words=left.split(" ").filter(word=>word.length>2),matched=words.filter(word=>right.includes(word)).length;const score=words.length?matched/words.length:0;return score>=.5?score:right.split(" ").filter(word=>word.length>2&&left.includes(word)).length/Math.max(1,right.split(" ").filter(word=>word.length>2).length)}
-function providerLimit(result:RateResult){return result.rate==null&&/(?:401|403|429|quota|rate limit|search limit|credits|exhausted|invalid api key|fetch failed|network|service unavailable)/i.test(result.note)}
+function providerLimit(result:RateResult){return result.rate==null&&/(?:provider_error|401|403|429|quota|rate limit|search limit|credits|exhausted|invalid api key|fetch failed|network|service unavailable)/i.test(result.note)}
 function safeGoogleTravelLink(name:string,checkIn:string,checkOut:string,currency:string){const params=new URLSearchParams({q:`${name} Sri Lanka hotel`,checkin:checkIn,checkout:checkOut,curr:currency});return `https://www.google.com/travel/search?${params.toString()}`}
 type SerpRate={lowest?:string;extracted_lowest?:number;before_taxes_fees?:string;extracted_before_taxes_fees?:number};
 type SerpOffer={source?:string;link?:string;rate_per_night?:SerpRate};
@@ -32,7 +32,7 @@ async function searchCompetitor(apiKey:string,competitor:Competitor,criteria:Cri
    let property:SerpProperty|undefined,fatal=false;
    for(const query of queries){
     const params=new URLSearchParams({engine:"google_hotels",q:query,check_in_date:checkIn,check_out_date:checkOut,adults:"2",children:"0",currency:criteria.currency,gl:"lk",hl:"en",api_key:apiKey}),response=await fetch(`https://serpapi.com/search.json?${params.toString()}`,{cache:"no-store"}),payload=await response.json() as SerpResponse;
-    if(!response.ok||payload.error){attemptErrors.push(`${checkIn}: ${payload.error||`HTTP ${response.status}`}`);fatal=response.status===401||response.status===403||response.status===429||/(?:quota|rate limit|search limit|credits|exhausted|invalid api key)/i.test(payload.error??"");if(fatal)break;continue}
+    if(!response.ok||payload.error){attemptErrors.push(`${checkIn}: PROVIDER_ERROR: ${payload.error||`HTTP ${response.status}`}`);fatal=true;if(fatal)break;continue}
     const candidates=(payload.properties??[]).map(item=>({property:item,score:nameScore(competitor.name,item.name??"")})).filter(item=>item.score>=.55).sort((a,b)=>b.score-a.score);
     property=candidates[0]?.property;if(property)break;
    }
