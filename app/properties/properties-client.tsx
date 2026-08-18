@@ -12,7 +12,7 @@ type Profile={id:string;profile_data:ProfileData;completion_percent:number;verif
 type Property={id:string;name:string;location:string|null;legacy_hotel_code:string|null;property_profiles:Profile[];property_profile_sources:Source[]};
 type Field={key:string;label:string;placeholder?:string;type?:"text"|"url"|"email"|"textarea"};
 type Section={key:string;label:string;description:string;fields:Field[]};
-type Competitor={name:string;url:string;active:boolean};
+type Competitor={name:string;url:string;active:boolean;xoteloHotelKey?:string;xoteloName?:string};
 type RateCriteria={checkIn:string;checkOut:string;rooms:string;adults:string;children:string;childAges:string;mealPlan:string;roomType:string;cancellation:string;currency:string;source:string;ourRate:string};
 type RateAnalysis={checkedAt?:string;ourRate?:number|null;ourRateStatus?:string;ourRateSource?:string;ourRateSourceUrl?:string;marketMedian?:number|null;occupancy?:number|null;summary?:string;suggestedRate?:number|null;reason?:string;guide?:string;confidence?:string;results?:Array<{hotel:string;status:string;rate:number|null;currency:string;requestedCheckIn?:string;availableCheckIn?:string;availableCheckOut?:string;daysShifted?:number;datesChecked?:string;room?:string;mealPlan?:string;cancellation?:string;taxes?:string;source?:string;sourceUrl?:string;note?:string}>};
 
