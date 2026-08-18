@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { HOTEL_PROFILE_SEEDS } from "../../../profile-seed-data";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -19,6 +20,14 @@ type XoteloHotel = {
 type Competitor = { name?: string; url?: string; active?: boolean; xoteloHotelKey?: string; xoteloName?: string };
 
 type HotelMatch = XoteloHotel & { score: number };
+
+function competitorSetFor(code: string | null, data: Record<string, unknown>) {
+  const saved = data.competitorSet as { main?: Competitor[]; additional?: Competitor[]; criteria?: Record<string, unknown> } | undefined;
+  if ((saved?.main?.length ?? 0) + (saved?.additional?.length ?? 0) > 0) return saved;
+  const key = code === "LTL" ? "TLK" : code === "LBR" ? "LBU" : code ?? "";
+  const seed = HOTEL_PROFILE_SEEDS[key]?.profile.competitorSet;
+  return seed && typeof seed === "object" ? seed as typeof saved : saved;
+}
 
 function db() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY;
@@ -124,13 +133,13 @@ export async function POST(request: NextRequest) {
     if (!body.propertyId) return NextResponse.json({ error: "Select a hotel first" }, { status: 400 });
 
     const client = db();
-    const { data: property, error } = await client.from("properties").select("id,name,location,property_profiles(id,profile_data)").eq("id", body.propertyId).single();
+    const { data: property, error } = await client.from("properties").select("id,name,location,legacy_hotel_code,property_profiles(id,profile_data)").eq("id", body.propertyId).single();
     if (error || !property) throw error ?? new Error("Hotel not found");
     const relation = property.property_profiles as unknown;
     const profiles = Array.isArray(relation) ? relation : relation ? [relation] : [];
     const profile = profiles[0] as { id?: string; profile_data?: Record<string, unknown> } | undefined;
     const profileData = profile?.profile_data ?? {};
-    const set = profileData.competitorSet as { main?: Competitor[]; additional?: Competitor[]; criteria?: Record<string, unknown> } | undefined;
+    const set = competitorSetFor(property.legacy_hotel_code, profileData);
     const main = [...(set?.main ?? [])].slice(0, 4);
     const host = process.env.XOTELO_RAPIDAPI_HOST ?? DEFAULT_RAPIDAPI_HOST;
     const serpApiKey = process.env.SERPAPI_API_KEY;
