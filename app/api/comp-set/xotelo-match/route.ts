@@ -52,17 +52,31 @@ function matchScore(expected: string, candidate: XoteloHotel, location: string) 
 }
 
 async function findHotel(name: string, location: string, apiKey: string, host: string) {
-  const query = [name, location, "Sri Lanka"].filter(Boolean).join(" ");
-  const response = await fetch(`https://${host}/api/search?${new URLSearchParams({ query })}`, {
-    headers: { "X-RapidAPI-Key": apiKey, "X-RapidAPI-Host": host }, cache: "no-store",
-  });
-  const payload = await response.json() as { error?: { message?: string } | string; result?: { list?: XoteloHotel[] } };
-  if (!response.ok || payload.error) {
+  const simplified = name.replace(/\b(hotel|resort|the|by|lavendish)\b/gi, " ").replace(/\s+/g, " ").trim();
+  const queries = [
+    name.trim(),
+    simplified,
+    [name, location].filter(Boolean).join(" "),
+    [simplified, location].filter(Boolean).join(" "),
+  ].filter((query, index, all) => query && all.findIndex(item => item.toLowerCase() === query.toLowerCase()) === index);
+  let best: { item: XoteloHotel; score: number } | undefined;
+
+  for (const query of queries) {
+    const response = await fetch(`https://${host}/api/search?${new URLSearchParams({ query, location_type: "accommodation" })}`, {
+      headers: { "X-RapidAPI-Key": apiKey, "X-RapidAPI-Host": host }, cache: "no-store",
+    });
+    const payload = await response.json() as { error?: { message?: string } | string; result?: { list?: XoteloHotel[] } };
     const message = typeof payload.error === "string" ? payload.error : payload.error?.message;
-    throw new Error(`Xotelo search failed: ${message ?? `HTTP ${response.status}`}`);
+    if (!response.ok) throw new Error(`Xotelo search failed: ${message ?? `HTTP ${response.status}`}`);
+    if (payload.error && !/no results? found/i.test(message ?? "")) throw new Error(`Xotelo search failed: ${message}`);
+
+    const candidate = (payload.result?.list ?? [])
+      .map(item => ({ item, score: matchScore(name, item, location) }))
+      .sort((a, b) => b.score - a.score)[0];
+    if (candidate && (!best || candidate.score > best.score)) best = candidate;
+    if (best?.score === 1) break;
   }
-  const matches = (payload.result?.list ?? []).map(item => ({ item, score: matchScore(name, item, location) })).sort((a, b) => b.score - a.score);
-  const best = matches[0];
+
   return best?.score >= .72 && best.item.hotel_key ? { ...best.item, score: best.score } : null;
 }
 
