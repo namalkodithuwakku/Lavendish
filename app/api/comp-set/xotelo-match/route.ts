@@ -77,7 +77,8 @@ async function findHotel(name: string, location: string, apiKey: string, host: s
     if (best?.score === 1) break;
   }
 
-  return best?.score >= .72 && best.item.hotel_key ? { ...best.item, score: best.score } : null;
+  if (!best || best.score < .72 || !best.item.hotel_key) return null;
+  return { ...best.item, score: best.score };
 }
 
 export async function POST(request: NextRequest) {
