@@ -18,6 +18,8 @@ type XoteloHotel = {
 
 type Competitor = { name?: string; url?: string; active?: boolean; xoteloHotelKey?: string; xoteloName?: string };
 
+type HotelMatch = XoteloHotel & { score: number };
+
 function db() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY;
   if (!key) throw new Error("SUPABASE_SERVICE_ROLE_KEY is not configured");
@@ -51,7 +53,38 @@ function matchScore(expected: string, candidate: XoteloHotel, location: string) 
   return score;
 }
 
-async function findHotel(name: string, location: string, apiKey: string, host: string) {
+function tripadvisorKey(value: string) {
+  const match = value.match(/Hotel_Review-g(\d+)-d(\d+)/i) ?? value.match(/\b(g\d+-d\d+)\b/i);
+  return match ? (match[1]?.startsWith("g") ? match[1] : `g${match[1]}-d${match[2]}`) : null;
+}
+
+async function findTripadvisorMatch(name: string, location: string, serpApiKey?: string): Promise<HotelMatch | null> {
+  if (!serpApiKey) return null;
+  try {
+    const params = new URLSearchParams({
+      engine: "google",
+      q: `site:tripadvisor.com/Hotel_Review \"${name}\" ${location} Sri Lanka`,
+      gl: "lk", hl: "en", num: "10", api_key: serpApiKey,
+    });
+    const response = await fetch(`https://serpapi.com/search.json?${params}`, { cache: "no-store" });
+    if (!response.ok) return null;
+    const payload = await response.json() as { organic_results?: Array<{ title?: string; link?: string; redirect_link?: string }> };
+    const candidates = (payload.organic_results ?? []).flatMap(result => {
+      const url = result.link ?? result.redirect_link ?? "";
+      const hotelKey = tripadvisorKey(url);
+      if (!hotelKey) return [];
+      const item: XoteloHotel = { hotel_key: hotelKey, name: result.title?.replace(/\s*-\s*Tripadvisor.*$/i, "").trim() || name, url };
+      return [{ item, score: matchScore(name, item, location) }];
+    }).sort((a, b) => b.score - a.score);
+    const best = candidates[0];
+    if (!best || best.score < .55 || !best.item.hotel_key) return null;
+    return { ...best.item, score: best.score };
+  } catch {
+    return null;
+  }
+}
+
+async function findHotel(name: string, location: string, apiKey: string, host: string, serpApiKey?: string): Promise<HotelMatch | null> {
   const simplified = name.replace(/\b(hotel|resort|the|by|lavendish)\b/gi, " ").replace(/\s+/g, " ").trim();
   const queries = [
     name.trim(),
@@ -77,8 +110,8 @@ async function findHotel(name: string, location: string, apiKey: string, host: s
     if (best?.score === 1) break;
   }
 
-  if (!best || best.score < .72 || !best.item.hotel_key) return null;
-  return { ...best.item, score: best.score };
+  if (best && best.score >= .72 && best.item.hotel_key) return { ...best.item, score: best.score };
+  return findTripadvisorMatch(name, location, serpApiKey);
 }
 
 export async function POST(request: NextRequest) {
@@ -100,15 +133,16 @@ export async function POST(request: NextRequest) {
     const set = profileData.competitorSet as { main?: Competitor[]; additional?: Competitor[]; criteria?: Record<string, unknown> } | undefined;
     const main = [...(set?.main ?? [])].slice(0, 4);
     const host = process.env.XOTELO_RAPIDAPI_HOST ?? DEFAULT_RAPIDAPI_HOST;
+    const serpApiKey = process.env.SERPAPI_API_KEY;
     const location = property.location ?? "Sri Lanka";
-    const ownMatch = await findHotel(property.name, location, apiKey, host);
+    const ownMatch = await findHotel(property.name, location, apiKey, host, serpApiKey);
     const matched: Array<{ name: string; hotelKey: string; matchedName: string; score: number }> = [];
     const unmatched: string[] = [];
     const updatedMain: Competitor[] = [];
 
     for (const competitor of main) {
       if (!competitor.name?.trim()) { updatedMain.push(competitor); continue; }
-      const found = await findHotel(competitor.name.trim(), location, apiKey, host);
+      const found = await findHotel(competitor.name.trim(), location, apiKey, host, serpApiKey);
       if (found?.hotel_key) {
         matched.push({ name: competitor.name, hotelKey: found.hotel_key, matchedName: found.name ?? competitor.name, score: found.score });
         updatedMain.push({ ...competitor, xoteloHotelKey: found.hotel_key, xoteloName: found.name ?? competitor.name });
