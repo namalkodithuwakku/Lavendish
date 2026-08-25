@@ -60,6 +60,7 @@ function readOccupancy_(sheetId, requestedYear, requestedMonth) {
     functions: parsed.functions,
     allotment: parsed.allotment,
     availability: parsed.availability,
+    sections: parsed.sections,
     warnings: parsed.warnings,
     readAt: new Date().toISOString(),
     mode: "read-only"
@@ -87,7 +88,7 @@ function findMonthBlock_(values, display, month) {
 
 function parseMonthBlock_(values, display, start, end, month) {
   var header = display[start];
-  var totalRooms = numberRightOfAlias_(values[start], display[start], "TOTAL_ROOMS");
+  var headerTotalRooms = numberRightOfAlias_(values[start], display[start], "TOTAL_ROOMS");
   var hotelName = findHotelName_(header, month);
   var lastUpdatedDate = textRightOfAlias_(display[start], "LAST_UPDATED");
   var lastUpdatedTime = textRightOfAlias_(display[start], "TIME");
@@ -104,28 +105,40 @@ function parseMonthBlock_(values, display, start, end, month) {
   }
   if (dateRow < 0) throw new Error("Date columns were not identified");
 
-  var totalRow = -1, functionsRows = [], allotmentRows = [], availabilityRow = -1;
+  var totalRow = -1, functionsRows = [], allotmentRows = [], availabilityRows = [], cottageRow = -1;
   for (var i = dateRow + 1; i < end; i++) {
     var label = firstLabel_(display[i]);
     var key = canonicalLabel_(label);
+    var normalized = normalize_(label);
     if (key === "TOTAL" && totalRow < 0) totalRow = i;
     if (key === "FUNCTIONS") functionsRows.push(i);
     if (key === "ALLOTMENT") allotmentRows.push(i);
-    if (key === "AVAILABILITY" && availabilityRow < 0) availabilityRow = i;
+    if (key === "AVAILABILITY") availabilityRows.push(i);
+    if (/^(new )?cottages?$/.test(normalized)) cottageRow = i;
   }
   if (totalRow < 0) throw new Error("Total row was not identified");
+
+  var mainAvailabilityRow = availabilityRows.filter(function(row){ return row > totalRow && (cottageRow < 0 || row < cottageRow); })[0];
+  var cottageAvailabilityRow = cottageRow >= 0 ? availabilityRows.filter(function(row){ return row > cottageRow; })[0] : -1;
+  var hasCottages = cottageRow >= 0 && mainAvailabilityRow !== undefined && cottageAvailabilityRow !== undefined;
+  var mainCapacity = hasCottages ? capacityFromRows_(values[totalRow], values[mainAvailabilityRow], dateColumns) : headerTotalRooms;
+  var cottageCapacity = hasCottages ? capacityFromRows_(values[cottageRow], values[cottageAvailabilityRow], dateColumns) : 0;
+  var totalRooms = hasCottages ? mainCapacity + cottageCapacity : headerTotalRooms;
+  if (!totalRooms || totalRooms <= 0) throw new Error("Total Rooms is missing");
 
   var days = [], warnings = [], sourceMap = {};
   for (var day = 1; day <= 31; day++) {
     if (dateColumns[day] === undefined) continue;
-    var occupied = numeric_(values[totalRow][dateColumns[day]]);
-    var available = totalRooms === null ? null : totalRooms - occupied;
-    if (available !== null && available < 0) warnings.push("Over capacity on day " + day + " by " + Math.abs(available) + " rooms");
-    days.push({ day: day, occupied: occupied, available: available, occupancyPercent: totalRooms ? Math.round(occupied / totalRooms * 100) : null });
+    var column = dateColumns[day];
+    var mainSold = numeric_(values[totalRow][column]);
+    var cottageSold = hasCottages ? numeric_(values[cottageRow][column]) : 0;
+    var occupied = mainSold + cottageSold;
+    var available = totalRooms - occupied;
+    if (available < 0) warnings.push("Over capacity on day " + day + " by " + Math.abs(available) + " rooms");
+    days.push({ day: day, occupied: occupied, available: available, occupancyPercent: Math.round(occupied / totalRooms * 100) });
   }
 
-  // Only rows above Total are booking sources. Rows below Total such as
-  // Balance Rooms and Functions must never enter the source breakdown.
+  // Only rows above Total are normal booking sources.
   for (var sr = dateRow + 1; sr < totalRow; sr++) {
     var sourceName = firstLabel_(display[sr]);
     if (!sourceName) continue;
@@ -134,24 +147,36 @@ function parseMonthBlock_(values, display, start, end, month) {
     var sourceTotal = sumDateColumns_(values[sr], dateColumns);
     var sourceDays = dateSeries_(values[sr], dateColumns);
     var mapKey = normalize_(sourceName);
-    if (!sourceMap[mapKey]) {
-      sourceMap[mapKey] = { name: sourceName.trim(), rooms: 0, days: sourceDays };
-    }
+    if (!sourceMap[mapKey]) sourceMap[mapKey] = { name: sourceName.trim(), rooms: 0, days: sourceDays };
     sourceMap[mapKey].rooms += sourceTotal;
   }
 
-  var sourceList = Object.keys(sourceMap).map(function(k){ return sourceMap[k]; }).filter(function(source){
+  var mainSources = Object.keys(sourceMap).map(function(k){ return sourceMap[k]; }).filter(function(source){
     return source.rooms !== 0 || source.days.some(function(entry){ return entry.rooms !== 0; });
   });
-  var dailySources = days.map(function(dayEntry){
-    return {
-      day: dayEntry.day,
-      rooms: sourceList.map(function(source){
-        var entry = source.days.filter(function(item){ return item.day === dayEntry.day; })[0];
-        return { name: source.name, rooms: entry ? numeric_(entry.rooms) : 0 };
-      }).filter(function(source){ return source.rooms !== 0; })
-    };
-  });
+  var cottageSources = [];
+  if (hasCottages) {
+    var cottageName = firstLabel_(display[cottageRow]) || "Cottages";
+    cottageSources.push({ name: cottageName, rooms: sumDateColumns_(values[cottageRow], dateColumns), days: dateSeries_(values[cottageRow], dateColumns) });
+  }
+  var sourceList = mainSources.concat(cottageSources);
+  var dailySources = makeDailySources_(days, sourceList);
+  var sections = [];
+  if (hasCottages) {
+    var mainDays = days.map(function(entry){
+      var sold = numeric_(values[totalRow][dateColumns[entry.day]]);
+      return { day: entry.day, occupied: sold, available: mainCapacity - sold, occupancyPercent: mainCapacity ? Math.round(sold / mainCapacity * 100) : 0 };
+    });
+    var cottageDays = days.map(function(entry){
+      var sold = numeric_(values[cottageRow][dateColumns[entry.day]]);
+      return { day: entry.day, occupied: sold, available: cottageCapacity - sold, occupancyPercent: cottageCapacity ? Math.round(sold / cottageCapacity * 100) : 0 };
+    });
+    sections = [
+      { key: "MAIN", name: "Main Hotel", totalRooms: mainCapacity, days: mainDays, sources: mainSources, dailySources: makeDailySources_(mainDays, mainSources) },
+      { key: "COTTAGES", name: "Cottages", totalRooms: cottageCapacity, days: cottageDays, sources: cottageSources, dailySources: makeDailySources_(cottageDays, cottageSources) }
+    ];
+    if (headerTotalRooms && headerTotalRooms !== totalRooms) warnings.push("Header total " + headerTotalRooms + " differs from section total " + totalRooms);
+  }
 
   return {
     hotelName: hotelName,
@@ -163,9 +188,34 @@ function parseMonthBlock_(values, display, start, end, month) {
     dailySources: dailySources,
     functions: sumRows_(values, functionsRows, dateColumns),
     allotment: sumRows_(values, allotmentRows, dateColumns),
-    availability: availabilityRow >= 0 ? dateSeries_(values[availabilityRow], dateColumns) : days.map(function(d){ return { day:d.day, rooms:d.available }; }),
+    availability: days.map(function(d){ return { day:d.day, rooms:d.available }; }),
+    sections: sections,
     warnings: warnings
   };
+}
+
+function capacityFromRows_(soldRow, availableRow, cols) {
+  var counts = {};
+  Object.keys(cols).forEach(function(day){
+    var capacity = numeric_(soldRow[cols[day]]) + numeric_(availableRow[cols[day]]);
+    if (capacity > 0) counts[capacity] = (counts[capacity] || 0) + 1;
+  });
+  var capacities = Object.keys(counts);
+  if (!capacities.length) return 0;
+  capacities.sort(function(a,b){ return counts[b] - counts[a] || Number(b) - Number(a); });
+  return Number(capacities[0]);
+}
+
+function makeDailySources_(days, sourceList) {
+  return days.map(function(dayEntry){
+    return {
+      day: dayEntry.day,
+      rooms: sourceList.map(function(source){
+        var entry = source.days.filter(function(item){ return item.day === dayEntry.day; })[0];
+        return { name: source.name, rooms: entry ? numeric_(entry.rooms) : 0 };
+      }).filter(function(source){ return source.rooms !== 0; })
+    };
+  });
 }
 
 function canonicalLabel_(label) {
