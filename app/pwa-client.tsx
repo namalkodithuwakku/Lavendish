@@ -11,14 +11,16 @@ export function PwaClient() {
   const [prompt, setPrompt] = useState<InstallPromptEvent | null>(null);
   const [showIosHelp, setShowIosHelp] = useState(false);
   const [isIos, setIsIos] = useState(false);
-  const [installed, setInstalled] = useState(false);\n  const [dismissed, setDismissed] = useState(false);
+  const [installed, setInstalled] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => undefined);
 
     const standalone = window.matchMedia("(display-mode: standalone)").matches ||
       ("standalone" in navigator && Boolean((navigator as Navigator & { standalone?: boolean }).standalone));
-    setInstalled(standalone);\n    setDismissed(window.localStorage.getItem("nkh:pwa-install-dismissed") === "1");
+    setInstalled(standalone);
+    setDismissed(window.localStorage.getItem("nkh:pwa-install-dismissed") === "1");
     setIsIos(/iphone|ipad|ipod/i.test(navigator.userAgent));
 
     const onPrompt = (event: Event) => {
