@@ -136,3 +136,33 @@
 /* Group readability floor. */
 .group-brand small,.group-kpis article>span,.group-weekdays span,.group-calendar-grid button>span,.group-calendar-grid button>small,.group-day-summary>header p,.group-hotel-head,.group-hotel-name>span{font-size:12px}.group-brand b,.group-status-bar small,.group-kpis article>small,.group-calendar-panel>header>span,.group-hotel-name small{font-size:13px}.group-status-bar>div,.group-status-bar button,.group-calendar-panel p,.group-hotel-panel p,.group-day-summary dt,.group-hotel-name b,.hotel-occupancy>b{font-size:14px}
 @media(max-width:820px){.group-shell.sidebar-expanded .group-topbar,.group-shell.sidebar-collapsed .group-topbar{margin-left:0}.group-shell.sidebar-expanded .group-page,.group-shell.sidebar-collapsed .group-page{width:100%;margin-left:0}.group-topbar>.mobile-menu-toggle{display:grid;place-items:center}.group-calendar-grid button>small{font-size:11px}}
+
+
+/* Compact Group calendar on phones only. Desktop layout is unchanged. */
+@media(max-width:720px){
+  .group-page{padding:8px 8px 24px!important}
+  .group-title-row{padding:7px 0 8px;gap:0}
+  .group-title-row>div:first-child{display:none}
+  .group-title-actions{width:100%}
+  .month-jump-wrap{width:100%}
+  .group-month-control{width:100%;min-height:42px;border-radius:12px}
+  .group-month-control>button{width:44px;min-height:42px}
+  .group-month-control .month-jump-trigger{width:auto;flex:1}
+  .group-month-control strong{font-size:15px}
+  .group-status-bar{margin:0 0 8px;padding:8px 10px}
+  .group-kpis{margin-bottom:8px}
+  .group-calendar-panel{padding:9px 7px 8px}
+  .group-calendar-panel>header{margin-bottom:7px;display:flex;align-items:center;flex-direction:row}
+  .group-calendar-panel>header h2{font-size:15px}
+  .group-calendar-panel>header p{display:none}
+  .group-calendar-panel>header>span{margin-left:auto;font-size:10px}
+  .group-weekdays,.group-calendar-grid{gap:3px}
+  .group-weekdays span{padding:2px 0;font-size:9px}
+  .group-calendar-grid button,.calendar-spacer{height:70px;min-height:70px;max-height:70px}
+  .group-calendar-grid button{min-width:0;padding:5px 3px;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;overflow:hidden;border-radius:9px}
+  .group-calendar-grid button>span{font-size:10px;line-height:1}
+  .group-calendar-grid button>b{width:100%;margin-top:6px;font-size:18px;line-height:1;text-align:left}
+  .group-calendar-grid button>small{width:100%;margin-top:3px;display:block;overflow:visible;font-size:9px;line-height:1.12;white-space:normal;word-break:normal;text-align:left}
+  .group-topbar .mode-switch button:not(.active){color:#716b7b;background:transparent}
+  .group-topbar .mode-switch button.active{color:#fff;background:#765cac}
+}
