@@ -8,6 +8,7 @@ import { masterNavigation, NavigationIcon } from "./navigation-icons";
 import { hasPageAccess, pageCodeForHref } from "./page-access";
 
 type ViewMode = "numbers" | "percentage";
+type OccupancySection = "COMBINED" | "MAIN" | "COTTAGES";
 const AUTO_REFRESH_MS = 5 * 60 * 1000;
 const MOBILE_WEEKDAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -78,6 +79,7 @@ export default function Home() {
     [access],
   );
   const [hotelCode, setHotelCode] = useState(savedHotel),
+    [occupancySection, setOccupancySection] = useState<OccupancySection>("COMBINED"),
     [viewMode, setViewMode] = useState<ViewMode>(savedView),
     [monthCursor, setMonthCursor] = useState(savedMonth),
     [liveHotel, setLiveHotel] = useState<HotelData | null>(null),
@@ -115,7 +117,16 @@ export default function Home() {
   const hasLive = Boolean(
     liveHotel && cache.current.get(cacheKey) === liveHotel,
   );
-  const hotel = hasLive && liveHotel ? liveHotel : emptyHotel;
+  const combinedHotel = hasLive && liveHotel ? liveHotel : emptyHotel;
+  const activeSection = combinedHotel.sections?.find((section) => section.key === occupancySection);
+  const hotel: HotelData = activeSection
+    ? {
+        ...combinedHotel,
+        rooms: activeSection.rooms,
+        occupied: activeSection.occupied,
+        sources: activeSection.sources,
+      }
+    : combinedHotel;
   const isCurrentMonth =
     year === now.getFullYear() && month === now.getMonth() + 1;
   const focusDay = isCurrentMonth ? Math.min(now.getDate(), daysInMonth) : 1,
@@ -143,6 +154,7 @@ export default function Home() {
           days?: { day: number; occupied?: number }[];
           sources?: { name: string; rooms: number; days?: { day: number; rooms: number }[] }[];
           dailySources?: { day: number; rooms: { name: string; rooms: number }[] }[];
+          sections?: { key: string; name: string; totalRooms: number; days?: { day: number; occupied?: number }[]; sources?: { name: string; rooms: number; days?: { day: number; rooms: number }[] }[]; dailySources?: { day: number; rooms: { name: string; rooms: number }[] }[] }[];
           functions?: number;
           allotment?: number;
           lastUpdatedDate?: string;
@@ -157,6 +169,28 @@ export default function Home() {
           name: data.hotelName || baseHotel.name,
           rooms: Number(data.totalRooms || baseHotel.rooms),
           occupied,
+          sections: (data.sections ?? []).map((section) => ({
+            key: section.key,
+            name: section.name,
+            rooms: Number(section.totalRooms || 0),
+            occupied: Array.from({ length: daysInMonth }, (_, index) =>
+              Number(section.days?.find((day) => day.day === index + 1)?.occupied ?? 0),
+            ),
+            sources: (section.sources ?? []).map((source) => ({
+              name: source.name,
+              rooms: Number(source.rooms || 0),
+              group: sourceGroup(source.name),
+              daily: Array.from({ length: daysInMonth }, (_, index) =>
+                Number(
+                  section.dailySources
+                    ?.find((entry) => entry.day === index + 1)
+                    ?.rooms.find((entry) => entry.name === source.name)?.rooms ??
+                    source.days?.find((entry) => entry.day === index + 1)?.rooms ??
+                    0,
+                ),
+              ),
+            })),
+          })),
           sources: (data.sources ?? []).map((source) => ({
             name: source.name,
             rooms: Number(source.rooms || 0),
@@ -325,6 +359,7 @@ export default function Home() {
   }, [hasFullPortfolioAccess, month, session, year]);
   useEffect(() => {
     setSelectedDay(null);
+    setOccupancySection("COMBINED");
   }, [cacheKey]);
   useEffect(() => {
     if (selectedDay === null) return;
@@ -511,6 +546,22 @@ export default function Home() {
             )}
           </div>
         </section>
+        {combinedHotel.code === "LWS" && combinedHotel.sections?.length === 2 && (
+          <section className="occupancy-section-switch" aria-label="Wild Safari occupancy section">
+            <div>
+              <span>WILD SAFARI INVENTORY</span>
+              <b>View the combined hotel or inspect each section separately.</b>
+            </div>
+            <div role="group" aria-label="Select inventory section">
+              <button className={occupancySection === "COMBINED" ? "active" : ""} onClick={() => setOccupancySection("COMBINED")}>Combined <small>44 rooms</small></button>
+              {combinedHotel.sections.map((section) => (
+                <button className={occupancySection === section.key ? "active" : ""} onClick={() => setOccupancySection(section.key as OccupancySection)} key={section.key}>
+                  {section.name} <small>{section.rooms} rooms</small>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
         <section className="number-cards">
           <article className="number-card primary">
             <div className="card-top">
