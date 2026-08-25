@@ -46,3 +46,16 @@
 .rail .rail-collapse:hover,.rail.expanded .rail-collapse:hover,.rail.collapsed .rail-collapse:hover{background:#ff9914;border-color:#ff9914;color:#fff;transform:scale(1.06)}
 .rail-collapse i{display:block;font-size:17px;font-style:normal;line-height:1}
 .rail-backdrop{display:none}
+
+
+/* Wild Safari parent inventory and occupancy section selector */
+.occupancy-section-switch{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:0 0 14px;padding:12px 14px;border:1px solid #ded8e8;border-radius:13px;background:linear-gradient(135deg,#f5f1fb,#fff)}
+.occupancy-section-switch>div:first-child{display:grid;gap:3px}
+.occupancy-section-switch>div:first-child span{font-size:10px;font-weight:900;letter-spacing:.07em;color:#725d9f}
+.occupancy-section-switch>div:first-child b{font-size:12px;color:#625c68}
+.occupancy-section-switch>div:last-child{display:grid;grid-template-columns:repeat(3,minmax(125px,1fr));gap:6px;padding:3px;border:1px solid #ddd7e7;border-radius:10px;background:#f5f2f8}
+.occupancy-section-switch button{min-height:42px;padding:6px 11px;border:0;border-radius:7px;background:transparent;color:#6e6874;font-size:12px;font-weight:850;cursor:pointer}
+.occupancy-section-switch button small{display:block;margin-top:2px;color:#91899a;font-size:10px;font-weight:650}
+.occupancy-section-switch button.active{background:#6e5b9e;color:#fff;box-shadow:0 4px 12px rgba(83,65,125,.18)}
+.occupancy-section-switch button.active small{color:#eee9f8}
+@media(max-width:760px){.occupancy-section-switch{align-items:stretch;flex-direction:column}.occupancy-section-switch>div:last-child{grid-template-columns:1fr}.occupancy-section-switch button{min-height:46px}}
