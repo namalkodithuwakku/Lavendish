@@ -17,6 +17,8 @@ type Profile = {
 };
 
 type SourceRoom = { name: string; rooms: number };
+type SheetSection = { key: string; name: string; totalRooms: number; days?: Array<{ day: number; occupied?: number; roomsSold?: number; available?: number }>; sources?: SheetSource[]; dailySources?: Array<{ day: number; rooms: SourceRoom[] }> };
+type SnapshotSection = { key: string; name: string; totalRooms: number; occupied: number; available: number; sources: SourceRoom[] };
 type SheetSource = {
   name: string;
   rooms?: number;
@@ -30,6 +32,7 @@ type SheetData = {
   days?: Array<{ day: number; occupied?: number; roomsSold?: number }>;
   sources?: SheetSource[];
   dailySources?: Array<{ day: number; rooms: SourceRoom[] }>;
+  sections?: SheetSection[];
   functions?: number;
   allotment?: number;
   lastUpdatedDate?: string;
@@ -44,6 +47,7 @@ type SnapshotRow = {
   available_rooms: number;
   occupancy_percent: number;
   source_breakdown: SourceRoom[] | null;
+  section_breakdown: SnapshotSection[] | null;
   functions: number | null;
   allotment: number | null;
   source_updated_at: string | null;
@@ -109,6 +113,28 @@ function snapshotPayload(rows: SnapshotRow[], profile: Profile, year: number, mo
   const complete = sorted.length === expectedDays;
   const fresh = complete && Number.isFinite(oldestCheck) && Date.now() - oldestCheck <= CACHE_MAX_AGE_MS;
   const sourceUpdated = sorted.find((row) => row.source_updated_at)?.source_updated_at ?? "";
+  const sectionMeta = new Map<string, { key: string; name: string; totalRooms: number }>();
+  for (const row of sorted)
+    for (const section of Array.isArray(row.section_breakdown) ? row.section_breakdown : [])
+      sectionMeta.set(section.key, { key: section.key, name: section.name, totalRooms: Number(section.totalRooms || 0) });
+  const sections = [...sectionMeta.values()].map((meta) => {
+    const sectionSourceTotals = new Map<string, number>();
+    const days = sorted.map((row) => {
+      const section = (Array.isArray(row.section_breakdown) ? row.section_breakdown : []).find((entry) => entry.key === meta.key);
+      for (const source of section?.sources ?? [])
+        sectionSourceTotals.set(source.name, (sectionSourceTotals.get(source.name) ?? 0) + Number(source.rooms || 0));
+      return { day: dayNumber(row.stay_date), occupied: Number(section?.occupied || 0), available: Number(section?.available || 0) };
+    });
+    return {
+      ...meta,
+      days,
+      sources: [...sectionSourceTotals.entries()].map(([name, rooms]) => ({ name, rooms })),
+      dailySources: sorted.map((row) => {
+        const section = (Array.isArray(row.section_breakdown) ? row.section_breakdown : []).find((entry) => entry.key === meta.key);
+        return { day: dayNumber(row.stay_date), rooms: section?.sources ?? [] };
+      }),
+    };
+  });
 
   return {
     success: true,
@@ -120,6 +146,7 @@ function snapshotPayload(rows: SnapshotRow[], profile: Profile, year: number, mo
     days: sorted.map((row) => ({ day: dayNumber(row.stay_date), occupied: Number(row.rooms_sold || 0) })),
     sources: [...sourceTotals.entries()].map(([name, rooms]) => ({ name, rooms })),
     dailySources,
+    sections,
     functions: Number(sorted[0]?.functions || 0),
     allotment: Number(sorted[0]?.allotment || 0),
     lastUpdatedDate: sourceUpdated || "Cached snapshot",
@@ -138,7 +165,7 @@ async function readSnapshots(
   const { data, error } = await db
     .from("yield_occupancy_snapshots")
     .select(
-      "hotel_code,stay_date,total_rooms,rooms_sold,available_rooms,occupancy_percent,source_breakdown,functions,allotment,source_updated_at,last_checked_at",
+      "hotel_code,stay_date,total_rooms,rooms_sold,available_rooms,occupancy_percent,source_breakdown,section_breakdown,functions,allotment,source_updated_at,last_checked_at",
     )
     .eq("hotel_code", hotelCode)
     .gte("stay_date", start)
@@ -204,6 +231,20 @@ async function saveSnapshots(
       available_rooms: totalRooms - sold,
       occupancy_percent: totalRooms > 0 ? Number(((sold / totalRooms) * 100).toFixed(2)) : 0,
       source_breakdown: dailySourceRooms(sheet, day),
+      section_breakdown: (sheet.sections ?? []).map((section) => {
+        const sectionDay = section.days?.find((entry) => Number(entry.day) === day);
+        const occupied = Number(sectionDay?.occupied ?? sectionDay?.roomsSold ?? 0);
+        const totalRooms = Number(section.totalRooms || 0);
+        const sources = section.dailySources?.find((entry) => Number(entry.day) === day)?.rooms ?? [];
+        return {
+          key: String(section.key),
+          name: String(section.name),
+          totalRooms,
+          occupied,
+          available: Number(sectionDay?.available ?? totalRooms - occupied),
+          sources: sources.map((entry) => ({ name: String(entry.name), rooms: Number(entry.rooms || 0) })),
+        };
+      }),
       functions: Number(sheet.functions || 0),
       allotment: Number(sheet.allotment || 0),
       source_updated_at: sourceUpdatedAt,
