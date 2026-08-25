@@ -12,7 +12,12 @@ export type HotelData = {
     name: string;
     rooms: number;
     occupied: number[];
-    sources: HotelData["sources"];
+    sources: {
+      name: string;
+      rooms: number;
+      group: "agent" | "ota" | "direct" | "other";
+      daily?: number[];
+    }[];
   }[];
   sources: {
     name: string;
