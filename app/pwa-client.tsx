@@ -11,14 +11,14 @@ export function PwaClient() {
   const [prompt, setPrompt] = useState<InstallPromptEvent | null>(null);
   const [showIosHelp, setShowIosHelp] = useState(false);
   const [isIos, setIsIos] = useState(false);
-  const [installed, setInstalled] = useState(false);
+  const [installed, setInstalled] = useState(false);\n  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => undefined);
 
     const standalone = window.matchMedia("(display-mode: standalone)").matches ||
       ("standalone" in navigator && Boolean((navigator as Navigator & { standalone?: boolean }).standalone));
-    setInstalled(standalone);
+    setInstalled(standalone);\n    setDismissed(window.localStorage.getItem("nkh:pwa-install-dismissed") === "1");
     setIsIos(/iphone|ipad|ipod/i.test(navigator.userAgent));
 
     const onPrompt = (event: Event) => {
@@ -34,7 +34,7 @@ export function PwaClient() {
     };
   }, []);
 
-  if (installed || (!prompt && !isIos)) return null;
+  if (installed || dismissed || (!prompt && !isIos)) return null;
 
   const install = async () => {
     if (prompt) {
@@ -52,7 +52,7 @@ export function PwaClient() {
       <div className="pwa-install-mark">NKH</div>
       <div><b>Use like an app</b><span>{showIosHelp ? "In Safari, tap Share, then Add to Home Screen." : "Add NKH Performance Hub to your home screen."}</span></div>
       <button type="button" onClick={install}>{showIosHelp ? "Got it" : "Install"}</button>
-      <button type="button" className="pwa-dismiss" aria-label="Dismiss install message" onClick={() => { setInstalled(true); setShowIosHelp(false); }}>×</button>
+      <button type="button" className="pwa-dismiss" aria-label="Dismiss install message" onClick={() => { window.localStorage.setItem("nkh:pwa-install-dismissed", "1"); setDismissed(true); setShowIosHelp(false); }}>×</button>
     </div>
   );
 }
