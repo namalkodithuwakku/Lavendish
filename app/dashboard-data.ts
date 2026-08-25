@@ -7,6 +7,13 @@ export type HotelData = {
   updated: string;
   updatedState: "current" | "old";
   occupied: number[];
+  sections?: {
+    key: string;
+    name: string;
+    rooms: number;
+    occupied: number[];
+    sources: HotelData["sources"];
+  }[];
   sources: {
     name: string;
     rooms: number;
