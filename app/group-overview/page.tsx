@@ -7,6 +7,7 @@ import { hotels } from "../dashboard-data";
 import { masterNavigation, NavigationIcon } from "../navigation-icons";
 import { hasPageAccess, pageCodeForHref } from "../page-access";
 import "./group-overview.css";
+import { extractDailySources, groupSourceBreakdown, type SourceRoom } from "./source-breakdown";
 
 type ViewMode = "numbers" | "percentage";
 type LoadState = "waiting" | "loading" | "ready" | "stale" | "error";
@@ -16,6 +17,7 @@ type PortfolioHotel = {
   location: string;
   rooms: number;
   occupied: number[];
+  dailySources?: SourceRoom[][];
   state: LoadState;
   error?: string;
   updated?: string;
@@ -77,7 +79,7 @@ function emptyPortfolio(days: number): PortfolioHotel[] {
 }
 
 function cacheKey(year: number, month: number) {
-  return `occupancy:groupCache:${year}-${month}`;
+  return `occupancy:groupCache:v2:${year}-${month}`;
 }
 
 function readBrowserCache(year: number, month: number, days: number) {
@@ -139,6 +141,8 @@ export default function GroupOverviewPage() {
   const [monthCursor, setMonthCursor] = useState(initialMonth);
   const [viewMode, setViewMode] = useState<ViewMode>(initialView);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [sourceOpen, setSourceOpen] = useState(false);
+  const sourceDialog = useRef<HTMLDialogElement>(null);
   const [portfolio, setPortfolio] = useState<PortfolioHotel[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [backgroundRefreshing, setBackgroundRefreshing] = useState(false);
@@ -200,6 +204,7 @@ export default function GroupOverviewPage() {
               ),
             ),
             updated: `${data.lastUpdatedDate || "Sheet"} ${data.lastUpdatedTime || ""}`.trim(),
+            dailySources: extractDailySources(data, daysInMonth),
             state: "ready",
             error: undefined,
             needsSync: Boolean(data.syncNeeded),
@@ -309,6 +314,12 @@ export default function GroupOverviewPage() {
   useEffect(() => {
     window.localStorage.setItem("occupancy:groupView", viewMode);
   }, [viewMode]);
+  useEffect(() => { sourceDialog.current?.close(); }, [month, year]);
+  useEffect(() => {
+    const dialog = sourceDialog.current;
+    if (sourceOpen && dialog && !dialog.open) dialog.showModal();
+    if (!sourceOpen && dialog?.open) dialog.close();
+  }, [sourceOpen]);
   useEffect(() => {
     const closePicker = (event: PointerEvent) => {
       if (!monthPickerRef.current?.contains(event.target as Node)) setMonthPickerOpen(false);
@@ -334,6 +345,7 @@ export default function GroupOverviewPage() {
     readyHotels.reduce((sum, hotel) => sum + hotel.rooms, 0),
   );
   const selectedSold = dailySold[focusIndex] ?? 0;
+  const sourceBreakdown = groupSourceBreakdown(readyHotels, focusIndex);
   const selectedCapacity = dailyCapacity[focusIndex] ?? 0;
   const selectedAvailable = Math.max(0, selectedCapacity - selectedSold);
   const tomorrowSold = dailySold[focusIndex + 1] ?? 0;
@@ -447,7 +459,7 @@ export default function GroupOverviewPage() {
 
         <section className="group-content-grid">
           <article className="group-calendar-panel">
-            <header><div><h2>Group room position</h2><p>Select a date to compare all 10 hotels.</p></div><span>{lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : "Loading live data…"}</span></header>
+            <header><div><h2>Group room position</h2><p>Select a date to view booking sources across hotels.</p></div><span>{lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : "Loading live data…"}</span></header>
             <div className="group-weekdays">{WEEKDAYS.map((day) => <span key={day}>{day}</span>)}</div>
             <div className="group-calendar-grid">
               {Array.from({ length: monthOffset }, (_, index) => <span className="calendar-spacer" key={`space-${index}`} />)}
@@ -455,7 +467,7 @@ export default function GroupOverviewPage() {
                 const day = index + 1;
                 const sold = dailySold[index] ?? 0;
                 const capacity = dailyCapacity[index] ?? 0;
-                return <button className={`${heatClass(sold, capacity)} ${focusDay === day ? "selected" : ""}`} key={day} onClick={() => setSelectedDay(day)}><span>{day}</span><b>{viewMode === "numbers" ? sold : `${percentage(sold, capacity)}%`}</b><small>{Math.max(0, capacity - sold)} available</small></button>;
+                return <button className={`${heatClass(sold, capacity)} ${focusDay === day ? "selected" : ""}`} key={day} aria-label={`View booking sources for ${day} ${monthLabel}`} onClick={() => { setSelectedDay(day); setSourceOpen(true); }}><span>{day}</span><b>{viewMode === "numbers" ? sold : `${percentage(sold, capacity)}%`}</b><small>{Math.max(0, capacity - sold)} available</small></button>;
               })}
             </div>
           </article>
@@ -498,6 +510,25 @@ export default function GroupOverviewPage() {
           </section>
         </section>
       </section>
+      <dialog ref={sourceDialog} className="group-source-dialog" aria-labelledby="group-source-title" onClose={() => setSourceOpen(false)} onClick={(event) => {
+        if (event.target === event.currentTarget) {
+          const bounds = event.currentTarget.getBoundingClientRect();
+          if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) setSourceOpen(false);
+        }
+      }}>
+        <header><div><small>GROUP BOOKING SOURCES</small><h2 id="group-source-title">{focusDay} {monthLabel}</h2></div><button type="button" onClick={() => setSourceOpen(false)} aria-label="Close source breakdown">×</button></header>
+        <div className="group-source-total"><span>Rooms sold</span><strong>{selectedSold.toLocaleString()}</strong></div>
+        <p>{readyHotels.length} of {hotels.length} hotels reporting{readyHotels.some((hotel) => hotel.state === "stale") ? " · Includes cached hotel data" : ""}.</p>
+        {readyHotels.length < hotels.length && <p className="group-source-warning">Partial totals: hotels still loading or unavailable are excluded.</p>}
+        <div className="group-source-list">
+          {sourceBreakdown.sources.map((source) => <div key={source.name}><span>{source.name}</span><strong>{source.rooms.toLocaleString()}</strong></div>)}
+          {!sourceBreakdown.sources.length && <p>No source entries recorded for this date in the loaded data.</p>}
+          {sourceBreakdown.unclassified > 0 && <div><span>Not classified in source rows</span><strong>{sourceBreakdown.unclassified.toLocaleString()}</strong></div>}
+        </div>
+        {sourceBreakdown.excess > 0 && <p className="group-source-warning">Source entries exceed rooms sold by {sourceBreakdown.excess} across affected hotels. Please check the sheet entries.</p>}
+        <p>Matching source names are combined across hotels.</p>
+        <button type="button" className="group-source-close" onClick={() => setSourceOpen(false)}>Close</button>
+      </dialog>
     </main>
   );
 }
