@@ -22,7 +22,7 @@ export function canonicalSource(name: string) {
   const key = sourceKey(clean);
   // Fantastic Traveler has historically been entered with many suffixes/second words.
   // Treat every source whose first word is "Fantastic" as the same booking source.
-  if (/^fantastic(?:\\s|$)/i.test(clean)) return "Fantastic Traveler";
+  if (/^fantastic(?:\s|$)/i.test(clean)) return "Fantastic Traveler";
   return aliases[key] ?? clean;
 }
 export function extractDailySources(payload: SourcePayload, days: number): SourceRoom[][] {
