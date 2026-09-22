@@ -1,6 +1,23 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { canonicalSource, extractDailySources, groupSourceBreakdown } from '../app/group-overview/source-breakdown.ts';
+import { canonicalSource, extractDailySources, groupSourceBreakdown, groupMonthlySourceBreakdown } from '../app/group-overview/source-breakdown.ts';
+
+test('monthly totals combine aliases across days and hotels and respect month length', () => {
+  const result = groupMonthlySourceBreakdown([
+    { occupied:[3,2,99], dailySources:[[{name:'bookingcom',rooms:3}],[{name:'Agoda',rooms:2}],[{name:'Agoda',rooms:99}]] },
+    { occupied:[2,4], dailySources:[[{name:'Booking.com',rooms:2}],[{name:'agoda.com',rooms:4}]] },
+  ],2);
+  assert.deepEqual(result.sources,[{name:'Agoda',rooms:6},{name:'Booking.com',rooms:5}]);
+  assert.equal(result.recorded,11);
+  assert.equal(result.unclassified,0);
+  assert.equal(result.excess,0);
+});
+test('monthly reconciliation does not cancel shortages against excess on other days', () => {
+  const result = groupMonthlySourceBreakdown([{occupied:[5,2,4],dailySources:[[{name:'Agoda',rooms:3}],[{name:'Agoda',rooms:4}]]}],3);
+  assert.equal(result.unclassified,6);
+  assert.equal(result.excess,2);
+  assert.equal(groupMonthlySourceBreakdown([],31).recorded,0);
+});
 
 test('Booking.com punctuation, casing and explicit aliases match', () => {
   for (const name of ['bookingcom', 'Booking.com', ' BOOKING COM ', 'Booking', 'booking dot com']) assert.equal(canonicalSource(name), 'Booking.com');

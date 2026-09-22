@@ -52,3 +52,22 @@ export function groupSourceBreakdown(hotels: { occupied: number[]; dailySources?
   const sources = [...totals.values()].sort((a, b) => b.rooms - a.rooms || a.name.localeCompare(b.name));
   return { sources, unclassified, excess, recorded: sources.reduce((sum, source) => sum + source.rooms, 0) };
 }
+
+export function groupMonthlySourceBreakdown(hotels: { occupied: number[]; dailySources?: SourceRoom[][] }[], days: number) {
+  const totals = new Map<string, SourceRoom>();
+  let unclassified = 0;
+  let excess = 0;
+  // Reconcile each hotel/day first so discrepancies cannot cancel out.
+  for (let index = 0; index < days; index += 1) {
+    const day = groupSourceBreakdown(hotels, index);
+    unclassified += day.unclassified;
+    excess += day.excess;
+    for (const source of day.sources) {
+      const key = sourceKey(source.name);
+      const previous = totals.get(key);
+      totals.set(key, { name: previous?.name ?? source.name, rooms: (previous?.rooms ?? 0) + source.rooms });
+    }
+  }
+  const sources = [...totals.values()].sort((a, b) => b.rooms - a.rooms || a.name.localeCompare(b.name));
+  return { sources, unclassified, excess, recorded: sources.reduce((sum, source) => sum + source.rooms, 0) };
+}

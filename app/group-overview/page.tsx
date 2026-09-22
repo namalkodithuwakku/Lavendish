@@ -7,7 +7,7 @@ import { hotels } from "../dashboard-data";
 import { masterNavigation, NavigationIcon } from "../navigation-icons";
 import { hasPageAccess, pageCodeForHref } from "../page-access";
 import "./group-overview.css";
-import { extractDailySources, groupSourceBreakdown, type SourceRoom } from "./source-breakdown";
+import { extractDailySources, groupSourceBreakdown, groupMonthlySourceBreakdown, type SourceRoom } from "./source-breakdown";
 
 type ViewMode = "numbers" | "percentage";
 type LoadState = "waiting" | "loading" | "ready" | "stale" | "error";
@@ -355,6 +355,11 @@ export default function GroupOverviewPage() {
     .slice(focusIndex, focusIndex + 7)
     .reduce((sum, value) => sum + value, 0);
   const monthSold = dailySold.reduce((sum, value) => sum + value, 0);
+  const monthlySources = groupMonthlySourceBreakdown(readyHotels, daysInMonth);
+  const monthlySourceRows = [
+    ...monthlySources.sources,
+    ...(monthlySources.unclassified > 0 ? [{ name: "Not classified in source rows", rooms: monthlySources.unclassified }] : []),
+  ];
   const monthCapacity = dailyCapacity.reduce((sum, value) => sum + value, 0);
   const monthLabel = monthFormatter.format(monthCursor);
   const shortMonth = shortMonthFormatter.format(monthCursor).toUpperCase();
@@ -508,6 +513,25 @@ export default function GroupOverviewPage() {
               })}
             </div>
           </section>
+        </section>
+        <section className="group-hotel-panel group-monthly-sources" aria-labelledby="monthly-sources-title">
+          <header><div><h2 id="monthly-sources-title">Monthly Group Source Breakdown</h2><p>{monthLabel} · Room nights across all loaded hotels.</p></div></header>
+          <div className="monthly-source-summary">
+            <div><span>Room nights sold</span><strong>{monthSold.toLocaleString()}</strong></div>
+            <div><span>Classified by source</span><strong>{monthlySources.recorded.toLocaleString()}</strong></div>
+            <div><span>Hotels reporting</span><strong>{readyHotels.length}/{hotels.length}</strong></div>
+          </div>
+          {readyHotels.length < hotels.length && <p className="monthly-source-note">Partial totals: hotels still loading or unavailable are excluded.</p>}
+          {readyHotels.some((hotel) => hotel.state === "stale") && <p className="monthly-source-note">Includes cached data from hotels awaiting a successful refresh.</p>}
+          {monthlySourceRows.length > 0 ? <table className="monthly-source-table">
+            <caption className="monthly-source-note">Matching names are combined. Share is based on {monthSold.toLocaleString()} room nights sold for the selected month.</caption>
+            <thead><tr><th scope="col">Booking source</th><th scope="col">Room nights</th><th scope="col">Share of sold</th></tr></thead>
+            <tbody>{monthlySourceRows.map((source, index) => <tr key={`${source.name}-${index}`}>
+              <th scope="row"><span>{source.name}</span><div className="monthly-source-bar" aria-hidden="true"><i style={{ width: `${Math.min(100, percentage(source.rooms, monthSold))}%` }} /></div></th>
+              <td>{source.rooms.toLocaleString()}</td><td>{monthSold > 0 ? `${percentage(source.rooms, monthSold)}%` : "—"}</td>
+            </tr>)}</tbody>
+          </table> : <p className="monthly-source-note">{readyHotels.length === 0 ? "Waiting for hotel data…" : "No source entries or room nights recorded for this month in the loaded data."}</p>}
+          {monthlySources.excess > 0 && <p className="monthly-source-warning">Source entries exceed rooms sold by {monthlySources.excess.toLocaleString()} room nights across affected hotel dates. Shares may total more than 100%; please check the sheet entries.</p>}
         </section>
       </section>
       <dialog ref={sourceDialog} className="group-source-dialog" aria-labelledby="group-source-title" onClose={() => setSourceOpen(false)} onClick={(event) => {
