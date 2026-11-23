@@ -127,7 +127,15 @@ function parseMonthBlock_(values, display, start, end, month) {
     // Wilpattu has a combined balance row, not a separate main-unit balance row.
     mainAvailabilityRow = cottageAvailabilityRow >= 0 ? cottageAvailabilityRow : undefined;
   }
-  var hasCottages = cottageRow >= 0 && mainAvailabilityRow !== undefined && cottageAvailabilityRow !== undefined;
+  // Only split Wilpattu occupancy when the month explicitly has both villa rows.
+  // Historical/unchanged months retain the original total-only view.
+  var isWilpattu = normalize_(hotelName).indexOf("wild wilpattu") >= 0;
+  var wilpattuVillaLayout = isWilpattu && cottageRow >= 0 &&
+    normalize_(firstLabel_(display[cottageRow])) === "new villas" &&
+    cottageAvailabilityRow > cottageRow &&
+    normalize_(firstLabel_(display[cottageAvailabilityRow])) === "villa availability";
+  var hasCottages = cottageRow >= 0 && mainAvailabilityRow !== undefined && cottageAvailabilityRow !== undefined &&
+    (!isWilpattu || wilpattuVillaLayout);
   var isWilpattuVillas = hasCottages && normalize_(hotelName).indexOf("wild wilpattu") >= 0 && normalize_(firstLabel_(display[cottageRow])) === "new villas";
   var mainCapacity = isWilpattuVillas ? 12 : (hasCottages ? capacityFromRows_(values[totalRow], values[mainAvailabilityRow], dateColumns) : headerTotalRooms);
   var cottageCapacity = isWilpattuVillas ? 12 : (hasCottages ? capacityFromRows_(values[cottageRow], values[cottageAvailabilityRow], dateColumns) : 0);
