@@ -110,23 +110,32 @@ function parseMonthBlock_(values, display, start, end, month) {
     var label = firstLabel_(display[i]);
     var key = canonicalLabel_(label);
     var normalized = normalize_(label);
-    if (key === "TOTAL" && totalRow < 0) totalRow = i;
+    if ((key === "TOTAL" || (normalize_(hotelName).indexOf("wild wilpattu") >= 0 && normalized === "delux total")) && totalRow < 0) totalRow = i;
     if (key === "FUNCTIONS") functionsRows.push(i);
     if (key === "ALLOTMENT") allotmentRows.push(i);
     if (key === "AVAILABILITY") availabilityRows.push(i);
-    if (/^(new )?cottages?$/.test(normalized)) cottageRow = i;
+    if (/^(new )?cottages?$/.test(normalized) || (normalize_(hotelName).indexOf("wild wilpattu") >= 0 && normalized === "new villas")) cottageRow = i;
   }
   if (totalRow < 0) throw new Error("Total row was not identified");
 
   var mainAvailabilityRow = availabilityRows.filter(function(row){ return row > totalRow && (cottageRow < 0 || row < cottageRow); })[0];
   var cottageAvailabilityRow = cottageRow >= 0 ? availabilityRows.filter(function(row){ return row > cottageRow; })[0] : -1;
+  if (cottageRow >= 0 && normalize_(hotelName).indexOf("wild wilpattu") >= 0) {
+    for (var va = cottageRow + 1; va < end; va++) {
+      if (normalize_(firstLabel_(display[va])) === "villa availability") { cottageAvailabilityRow = va; break; }
+    }
+    // Wilpattu has a combined balance row, not a separate main-unit balance row.
+    mainAvailabilityRow = cottageAvailabilityRow >= 0 ? cottageAvailabilityRow : undefined;
+  }
   var hasCottages = cottageRow >= 0 && mainAvailabilityRow !== undefined && cottageAvailabilityRow !== undefined;
-  var mainCapacity = hasCottages ? capacityFromRows_(values[totalRow], values[mainAvailabilityRow], dateColumns) : headerTotalRooms;
-  var cottageCapacity = hasCottages ? capacityFromRows_(values[cottageRow], values[cottageAvailabilityRow], dateColumns) : 0;
+  var isWilpattuVillas = hasCottages && normalize_(hotelName).indexOf("wild wilpattu") >= 0 && normalize_(firstLabel_(display[cottageRow])) === "new villas";
+  var mainCapacity = isWilpattuVillas ? 12 : (hasCottages ? capacityFromRows_(values[totalRow], values[mainAvailabilityRow], dateColumns) : headerTotalRooms);
+  var cottageCapacity = isWilpattuVillas ? 12 : (hasCottages ? capacityFromRows_(values[cottageRow], values[cottageAvailabilityRow], dateColumns) : 0);
   var totalRooms = hasCottages ? mainCapacity + cottageCapacity : headerTotalRooms;
   if (!totalRooms || totalRooms <= 0) throw new Error("Total Rooms is missing");
 
   var days = [], warnings = [], sourceMap = {};
+  if (isWilpattuVillas) warnings.push("Wilpattu capacity configured as 12 Main Unit rooms and 12 Villas; check days with Main Unit occupancy above 12.");
   for (var day = 1; day <= 31; day++) {
     if (dateColumns[day] === undefined) continue;
     var column = dateColumns[day];
@@ -135,6 +144,7 @@ function parseMonthBlock_(values, display, start, end, month) {
     var occupied = mainSold + cottageSold;
     var available = totalRooms - occupied;
     if (available < 0) warnings.push("Over capacity on day " + day + " by " + Math.abs(available) + " rooms");
+    if (isWilpattuVillas && mainSold > mainCapacity) warnings.push("Main Unit over capacity on day " + day + " by " + (mainSold - mainCapacity) + " rooms");
     days.push({ day: day, occupied: occupied, available: available, occupancyPercent: Math.round(occupied / totalRooms * 100) });
   }
 
@@ -172,8 +182,8 @@ function parseMonthBlock_(values, display, start, end, month) {
       return { day: entry.day, occupied: sold, available: cottageCapacity - sold, occupancyPercent: cottageCapacity ? Math.round(sold / cottageCapacity * 100) : 0 };
     });
     sections = [
-      { key: "MAIN", name: "Main Hotel", totalRooms: mainCapacity, days: mainDays, sources: mainSources, dailySources: makeDailySources_(mainDays, mainSources) },
-      { key: "COTTAGES", name: "Cottages", totalRooms: cottageCapacity, days: cottageDays, sources: cottageSources, dailySources: makeDailySources_(cottageDays, cottageSources) }
+      { key: "MAIN", name: isWilpattuVillas ? "Main Unit" : "Main Hotel", totalRooms: mainCapacity, days: mainDays, sources: mainSources, dailySources: makeDailySources_(mainDays, mainSources) },
+      { key: "COTTAGES", name: isWilpattuVillas ? "Villas" : "Cottages", totalRooms: cottageCapacity, days: cottageDays, sources: cottageSources, dailySources: makeDailySources_(cottageDays, cottageSources) }
     ];
     if (headerTotalRooms && headerTotalRooms !== totalRooms) warnings.push("Header total " + headerTotalRooms + " differs from section total " + totalRooms);
   }
