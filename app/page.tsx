@@ -546,14 +546,14 @@ export default function Home() {
             )}
           </div>
         </section>
-        {combinedHotel.code === "LWS" && combinedHotel.sections?.length === 2 && (
-          <section className="occupancy-section-switch" aria-label="Wild Safari occupancy section">
+        {(combinedHotel.code === "LWS" || combinedHotel.code === "LWW") && combinedHotel.sections?.length === 2 && (
+          <section className="occupancy-section-switch" aria-label={`${combinedHotel.name} occupancy section`}>
             <div>
-              <span>WILD SAFARI INVENTORY</span>
+              <span>{combinedHotel.code === "LWW" ? "WILD WILPATTU INVENTORY" : "WILD SAFARI INVENTORY"}</span>
               <b>View the combined hotel or inspect each section separately.</b>
             </div>
             <div role="group" aria-label="Select inventory section">
-              <button className={occupancySection === "COMBINED" ? "active" : ""} onClick={() => setOccupancySection("COMBINED")}>Combined <small>44 rooms</small></button>
+              <button className={occupancySection === "COMBINED" ? "active" : ""} onClick={() => setOccupancySection("COMBINED")}>Combined <small>{combinedHotel.rooms} rooms</small></button>
               {combinedHotel.sections.map((section) => (
                 <button className={occupancySection === section.key ? "active" : ""} onClick={() => setOccupancySection(section.key as OccupancySection)} key={section.key}>
                   {section.name} <small>{section.rooms} rooms</small>
