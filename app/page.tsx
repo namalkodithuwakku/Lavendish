@@ -118,7 +118,7 @@ export default function Home() {
     liveHotel && cache.current.get(cacheKey) === liveHotel,
   );
   const combinedHotel = hasLive && liveHotel ? liveHotel : emptyHotel;
-  const activeSection = combinedHotel.sections?.find((section) => section.key === occupancySection);
+  const activeSection = combinedHotel.code === "LWW" ? undefined : combinedHotel.sections?.find((section) => section.key === occupancySection);
   const hotel: HotelData = activeSection
     ? {
         ...combinedHotel,
@@ -546,10 +546,10 @@ export default function Home() {
             )}
           </div>
         </section>
-        {(combinedHotel.code === "LWS" || combinedHotel.code === "LWW") && combinedHotel.sections?.length === 2 && (
+        {combinedHotel.code === "LWS" && combinedHotel.sections?.length === 2 && (
           <section className="occupancy-section-switch" aria-label={`${combinedHotel.name} occupancy section`}>
             <div>
-              <span>{combinedHotel.code === "LWW" ? "WILD WILPATTU INVENTORY" : "WILD SAFARI INVENTORY"}</span>
+              <span>WILD SAFARI INVENTORY</span>
               <b>View the combined hotel or inspect each section separately.</b>
             </div>
             <div role="group" aria-label="Select inventory section">
